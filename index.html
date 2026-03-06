@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cutting</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+
+  <style>
+    :root {
+      --bg-1: #f4f8ff;
+      --bg-2: #e9f1ff;
+      --panel: #ffffff;
+      --ink: #0f223a;
+      --muted: #556981;
+      --line: #c9d8eb;
+      --accent: #1e6fd9;
+      --accent-dark: #1452a8;
+      --ok: #137333;
+      --danger: #b42318;
+      --shadow: 0 8px 20px rgba(22, 56, 94, .14);
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      font-family: "DM Sans", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 0%, #d5e6ff 0%, transparent 35%),
+        radial-gradient(circle at 90% 90%, #dfe9ff 0%, transparent 30%),
+        linear-gradient(125deg, var(--bg-1), var(--bg-2));
+      min-height: 100dvh;
+    }
+
+    .page {
+      margin: 0 auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .hero {
+      background: linear-gradient(145deg, #ffffff, #eef5ff);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 12px 16px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .hero-title {
+      margin: 0;
+      color: var(--accent);
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .status {
+      font-size: 13px;
+      font-weight: 700;
+      color: #27476a;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #f4f8ff;
+    }
+
+    .nav-btn {
+      border: 1px solid var(--line);
+      background: #f4f8ff;
+      color: #123a67;
+      border-radius: 10px;
+      min-height: 40px;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .nav-btn:hover {
+      background: #e7f0ff
+    }
+
+    .scan-btn {
+      border-color: #8dc0ff;
+      background: #e9f2ff;
+      color: #0f3b6b;
+    }
+
+    .scan-btn:hover {
+      background: #dcecff;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .hidden {
+      display: none !important
+    }
+
+    .section-title {
+      margin: 0 0 10px;
+      font-size: 18px;
+      font-weight: 800;
+      color: #123a67;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    @media(min-width:760px) {
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr))
+      }
+    }
+
+    .batch-btn {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f8fbff;
+      cursor: pointer;
+      padding: 12px;
+      box-shadow: 0 5px 12px rgba(22, 56, 94, .08);
+    }
+
+    .batch-btn:hover {
+      border-color: #94b8ea;
+      background: #eef5ff;
+    }
+
+    .batch-name {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 800;
+      color: #10345d;
+    }
+
+    .batch-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .batch-item {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f8fbff;
+      overflow: hidden;
+      box-shadow: 0 5px 12px rgba(22, 56, 94, .08);
+    }
+
+    .batch-toggle {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      text-align: left;
+      cursor: pointer;
+      padding: 12px;
+    }
+
+    .batch-toggle:hover {
+      background: #eef5ff;
+    }
+
+    .drop-icon {
+      flex: 0 0 auto;
+      width: 20px;
+      color: #2b5f98;
+      font-size: 14px;
+      line-height: 1.3;
+      font-weight: 900;
+      transform: translateY(1px);
+    }
+
+    .batch-main {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .serial-chip-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 0 12px 12px 42px;
+      border-top: 1px dashed #d4e2f2;
+      background: #f2f8ff;
+    }
+
+    .serial-chip {
+      border: 1px solid #c9dbef;
+      border-radius: 8px;
+      background: #fff;
+      color: #184a7d;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.2;
+      min-width: 36px;
+      text-align: center;
+    }
+
+    .serial-chip.done {
+      color: #165f2f;
+      border-color: #9fd2b0;
+      background: #effbf3;
+    }
+
+    .scan-gate-note {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: #345372;
+      font-weight: 700;
+      border: 1px dashed #b7cee8;
+      background: #f5f9ff;
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+
+    .meta {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    #serialList {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      justify-content: start;
+      gap: 10px;
+    }
+
+    @media (max-width:768px) {
+      #serialList {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+      }
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 5px 12px rgba(22, 56, 94, .08);
+      padding: 10px;
+    }
+
+    .label-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: #1d3f67;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .label-main {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .cutting-caption {
+      color: #1f4670;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .cutting-value {
+      margin: 0;
+      color: #082846;
+      font-size: 28px;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: .5px;
+    }
+
+    .batch-serial {
+      border: 1px solid #d2e1f3;
+      border-radius: 10px;
+      background: #f7fbff;
+      padding: 6px 8px;
+      min-width: 116px;
+    }
+
+    .bs-row+.bs-row {
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed #d2e1f3;
+    }
+
+    .bs-key {
+      color: #547697;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+    }
+
+    .bs-value {
+      color: #11395f;
+      font-size: 12px;
+      font-weight: 800;
+      word-break: break-word;
+      line-height: 1.25;
+    }
+
+    .kv {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 6px;
+      font-size: 13px;
+      margin-bottom: 3px;
+    }
+
+    .k {
+      color: var(--muted);
+      font-weight: 700
+    }
+
+    .v {
+      color: var(--ink);
+      font-weight: 700;
+      word-break: break-word
+    }
+
+    .card-actions {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .complete-btn {
+      border: none;
+      border-radius: 10px;
+      min-height: 38px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      background: #28A745;
+      cursor: pointer;
+    }
+
+    .complete-btn.undo {
+      background: #d9822b;
+    }
+
+    .empty {
+      padding: 24px;
+      text-align: center;
+      border: 1px dashed var(--line);
+      border-radius: 14px;
+      color: var(--muted);
+      font-weight: 700;
+      background: #f8fbff;
+    }
+
+    .err {
+      color: var(--danger)
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 24, 43, .45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      z-index: 999;
+    }
+
+    .modal-card {
+      width: min(460px, 100%);
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .modal-title {
+      margin: 0 0 8px;
+      font-size: 18px;
+      color: #123a67;
+      font-weight: 800;
+    }
+
+    .modal-text {
+      margin: 0;
+      font-size: 14px;
+      color: #314d6b;
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .modal-btn {
+      min-height: 40px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #f4f8ff;
+      color: #123a67;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .modal-btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .undo-toast {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      z-index: 1000;
+      background: #0f223a;
+      color: #fff;
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .undo-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .undo-btn {
+      border: 1px solid #9fc6ff;
+      color: #9fc6ff;
+      background: transparent;
+      border-radius: 8px;
+      min-height: 34px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    /* New Batch UI Styles */
+    .batch-item {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f8fbff;
+      margin-bottom: 10px;
+      overflow: hidden;
+      box-shadow: 0 5px 12px rgba(22, 56, 94, .08);
+    }
+
+    .batch-header {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .batch-header:hover {
+      background: #eef5ff;
+    }
+
+    .drop-icon {
+      transition: transform 0.2s;
+      font-size: 18px;
+      color: var(--accent);
+      width: 24px;
+      text-align: center;
+      order: 2;
+    }
+
+    .batch-item.expanded .drop-icon {
+      transform: rotate(180deg);
+    }
+
+    .batch-info {
+      flex: 1;
+    }
+
+    .batch-name {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 800;
+      color: #10345d;
+    }
+
+    .batch-meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .batch-content {
+      display: none;
+      padding: 0 12px 12px 42px;
+      border-top: 1px dashed #d4e2f2;
+      background: #f2f8ff;
+    }
+
+    .batch-item.expanded .batch-content {
+      display: block;
+    }
+
+    .collapsed-serials {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .serial-chip {
+      border: 1px solid #c9dbef;
+      border-radius: 6px;
+      background: #fff;
+      color: #184a7d;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .serial-chip.done {
+      color: #165f2f;
+      border-color: #9fd2b0;
+      background: #effbf3;
+    }
+
+    /* Revised Card UI Styles */
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: #fff;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(22, 56, 94, .1);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      position: relative;
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      color: #10345d;
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .card-body {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .cutting-section {
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .cutting-label {
+      color: #1f4670;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .cutting-val {
+      font-size: 42px;
+      font-weight: 900;
+      color: #082846;
+      margin: 0;
+      letter-spacing: 0.5px;
+    }
+
+    .details-box {
+      border: 1px solid #d2e1f3;
+      border-radius: 15px;
+      background: #f7fbff;
+      padding: 12px 15px;
+      min-width: 140px;
+    }
+
+    .detail-item {
+      margin-bottom: 10px;
+    }
+
+    .detail-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .detail-label {
+      color: #547697;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .detail-val {
+      color: #11395f;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .card-footer {
+      margin-top: 10px;
+    }
+
+    .big-complete-btn {
+      width: fit-content;
+      min-width: 150px;
+      height: 48px;
+      border: none;
+      border-radius: 12px;
+      background: #28a745;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .big-complete-btn:hover {
+      filter: brightness(1.1);
+    }
+
+    .big-complete-btn:active {
+      transform: scale(0.98);
+    }
+
+    .big-complete-btn.undo {
+      background: #d9822b;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <header class="hero">
+      <h1 class="hero-title">Cutting</h1>
+      <div class="controls">
+        <div id="status" class="status">Loading data...</div>
+        <button id="cameraBtn" class="nav-btn scan-btn" type="button"><i class="bi bi-camera"></i></button>
+        <button id="reloadBtn" class="nav-btn" type="button">Reload</button>
+        <input id="photoInput" type="file" accept="image/*" capture="environment" class="hidden">
+      </div>
+    </header>
+
+    <section class="panel">
+      <div id="batchView">
+        <h2 class="section-title">Batches</h2>
+        <div id="batchList" class="batch-stack"></div>
+      </div>
+
+      <div id="serialView" class="hidden">
+        <div class="controls" style="margin-bottom:15px;">
+          <button id="backBtn" class="nav-btn" type="button">Back To Batches</button>
+          <div id="selectedBatchLabel" class="status"></div>
+        </div>
+        <h2 class="section-title">Scanned Card</h2>
+        <div id="cardContainer"></div>
+      </div>
+    </section>
+    <canvas id="scanCanvas" class="hidden"></canvas>
+  </main>
+
+  <div id="confirmModal" class="modal hidden">
+    <div class="modal-card">
+      <h3 class="modal-title">Please Confirm</h3>
+      <p id="confirmText" class="modal-text"></p>
+      <div class="modal-actions">
+        <button id="confirmCancelBtn" class="modal-btn" type="button">Cancel</button>
+        <button id="confirmOkBtn" class="modal-btn primary" type="button">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="undoToast" class="undo-toast hidden">
+    <div id="undoText">Marked completed.</div>
+    <div class="undo-actions">
+      <button id="undoBtn" class="undo-btn" type="button">Undo</button>
+      <button id="undoCloseBtn" class="undo-btn" type="button">Close</button>
+    </div>
+  </div>
+
+  <!-- Scan Validation Modal -->
+  <div id="scanConfirmModal" class="modal hidden">
+    <div class="modal-card">
+      <h3 class="modal-title">Validate Scanned Data</h3>
+      <p class="modal-text" style="margin-bottom:12px;">Please confirm or correct the detected values before searching.
+      </p>
+
+      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px;">
+        <div>
+          <label style="font-size:11px; font-weight:800; color:var(--muted); text-transform:uppercase;">Batch (QR /
+            Manual)</label>
+          <input id="scanBatchInput" type="text"
+            style="width:100%; padding:10px; border:1px solid var(--line); border-radius:10px; font-weight:700;">
+        </div>
+        <div>
+          <label style="font-size:11px; font-weight:800; color:var(--muted); text-transform:uppercase;">Serial</label>
+          <input id="scanSerialInput" type="text"
+            style="width:100%; padding:10px; border:1px solid var(--line); border-radius:10px; font-weight:700;">
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="scanCancelBtn" class="modal-btn" type="button">Cancel</button>
+        <button id="scanSearchBtn" class="modal-btn primary" type="button">Search Card</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Use your deployed Apps Script URL here.
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQf0Y1dn-pND2oj9dGQyjmMa1qG0cR5vlBpHnsiRk9cSE1SxqktCJgitd_00Mpoj4Z6g/exec";
+
+    const statusEl = document.getElementById("status");
+    const cameraBtn = document.getElementById("cameraBtn"); // matches id in HTML
+    const photoInput = document.getElementById("photoInput"); // matches id in HTML
+    const reloadBtn = document.getElementById("reloadBtn");
+    const backBtn = document.getElementById("backBtn");
+    const batchView = document.getElementById("batchView");
+    const batchList = document.getElementById("batchList");
+    const serialView = document.getElementById("serialView");
+    const cardContainer = document.getElementById("cardContainer");
+    const selectedBatchLabel = document.getElementById("selectedBatchLabel");
+    const scanCanvas = document.getElementById("scanCanvas");
+    const scanCtx = scanCanvas.getContext("2d");
+
+    const confirmModal = document.getElementById("confirmModal");
+    const confirmText = document.getElementById("confirmText");
+    const confirmCancelBtn = document.getElementById("confirmCancelBtn");
+    const confirmOkBtn = document.getElementById("confirmOkBtn");
+
+    const undoToast = document.getElementById("undoToast");
+    const undoText = document.getElementById("undoText");
+    const undoBtn = document.getElementById("undoBtn");
+    const undoCloseBtn = document.getElementById("undoCloseBtn");
+
+    let allRows = [];
+    let pendingAction = null;
+    let lastUndoAction = null;
+    let undoTimer = null;
+    let scanBusy = false;
+    let activeBatch = "";
+
+    const MAX_IMAGE_SIDE = 1920;
+    const IMAGE_LOAD_TIMEOUT_MS = 20000;
+
+    function setStatus(text, isError) {
+      statusEl.textContent = text;
+      statusEl.className = "status" + (isError ? " err" : "");
+    }
+
+    function withTimeout(promise, timeoutMs, errorMessage) {
+      let timeoutId;
+      const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(errorMessage)), timeoutMs);
+      });
+      return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error("Unable to read selected image."));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function loadImageElement(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error("Unable to decode selected image."));
+        img.src = src;
+      });
+    }
+
+    async function loadImageFromFile(file) {
+      let objectUrl = "";
+      let imageSource = null;
+      let previewSrc = "";
+
+      if (typeof createImageBitmap === "function") {
+        try {
+          imageSource = await withTimeout(
+            createImageBitmap(file),
+            IMAGE_LOAD_TIMEOUT_MS,
+            "Photo decode timed out."
+          );
+          objectUrl = URL.createObjectURL(file);
+          previewSrc = objectUrl;
+          return { imageSource, objectUrl, previewSrc };
+        } catch (e) { }
+      }
+
+      try {
+        objectUrl = URL.createObjectURL(file);
+        const img = await withTimeout(
+          loadImageElement(objectUrl),
+          IMAGE_LOAD_TIMEOUT_MS,
+          "Photo load timed out."
+        );
+        imageSource = img;
+        previewSrc = objectUrl;
+        return { imageSource, objectUrl, previewSrc };
+      } catch (e) {
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+        objectUrl = "";
+      }
+
+      const dataUrl = await withTimeout(
+        readFileAsDataUrl(file),
+        IMAGE_LOAD_TIMEOUT_MS,
+        "Photo read timed out."
+      );
+      const fallbackImg = await withTimeout(
+        loadImageElement(dataUrl),
+        IMAGE_LOAD_TIMEOUT_MS,
+        "Photo decode timed out."
+      );
+      return { imageSource: fallbackImg, objectUrl: "", previewSrc: dataUrl };
+    }
+
+    function cropFrom(source, x, y, w, h) {
+      const sx = Math.max(0, Math.floor(x));
+      const sy = Math.max(0, Math.floor(y));
+      const sw = Math.max(1, Math.floor(w));
+      const sh = Math.max(1, Math.floor(h));
+      if (sx >= source.width || sy >= source.height) return null;
+      const safeW = Math.min(sw, source.width - sx);
+      const safeH = Math.min(sh, source.height - sy);
+      if (safeW < 2 || safeH < 2) return null;
+      const temp = document.createElement("canvas");
+      temp.width = safeW;
+      temp.height = safeH;
+      const tctx = temp.getContext("2d");
+      tctx.drawImage(source, sx, sy, safeW, safeH, 0, 0, safeW, safeH);
+      return temp;
+    }
+
+    function rotateCanvas(source, degrees) {
+      const rotated = document.createElement("canvas");
+      const rctx = rotated.getContext("2d");
+      if (degrees % 180 === 0) {
+        rotated.width = source.width;
+        rotated.height = source.height;
+      } else {
+        rotated.width = source.height;
+        rotated.height = source.width;
+      }
+      rctx.translate(rotated.width / 2, rotated.height / 2);
+      rctx.rotate((degrees * Math.PI) / 180);
+      rctx.drawImage(source, -source.width / 2, -source.height / 2);
+      return rotated;
+    }
+
+    function preprocessForQR(source) {
+      const out = document.createElement("canvas");
+      out.width = source.width;
+      out.height = source.height;
+      const octx = out.getContext("2d");
+      octx.drawImage(source, 0, 0);
+      const image = octx.getImageData(0, 0, out.width, out.height);
+      const data = image.data;
+      let sum = 0, count = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        sum += lum; count++;
+      }
+      const avg = sum / Math.max(1, count);
+      for (let i = 0; i < data.length; i += 4) {
+        const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        const bw = lum > avg ? 255 : 0;
+        data[i] = bw; data[i + 1] = bw; data[i + 2] = bw;
+      }
+      octx.putImageData(image, 0, 0);
+      return out;
+    }
+
+    function scaleCanvas(source, scale) {
+      const out = document.createElement("canvas");
+      out.width = Math.max(1, Math.round(source.width * scale));
+      out.height = Math.max(1, Math.round(source.height * scale));
+      const octx = out.getContext("2d");
+      octx.imageSmoothingEnabled = true;
+      octx.drawImage(source, 0, 0, out.width, out.height);
+      return out;
+    }
+
+    function tryDecodeQR(region) {
+      const qctx = region.getContext("2d");
+      const imageData = qctx.getImageData(0, 0, region.width, region.height);
+      return jsQR(imageData.data, region.width, region.height, { inversionAttempts: "attemptBoth" });
+    }
+
+    function readQRCodeFromCanvas(baseCanvas) {
+      const tryCandidates = [
+        () => tryDecodeQR(baseCanvas), // 1. Original
+        () => tryDecodeQR(scaleCanvas(baseCanvas, 1.5)), // 2. Slight upscale
+        () => tryDecodeQR(preprocessForQR(baseCanvas)),   // 3. Pre-processed B&W
+        () => { // 4. Center Crop
+          const crop = cropFrom(baseCanvas, baseCanvas.width * 0.25, baseCanvas.height * 0.25, baseCanvas.width * 0.5, baseCanvas.height * 0.5);
+          return crop ? tryDecodeQR(crop) : null;
+        },
+        () => { // 5. Rotations
+          for (const deg of [90, 180, 270]) {
+            const res = tryDecodeQR(rotateCanvas(baseCanvas, deg));
+            if (res) return res;
+          }
+          return null;
+        }
+      ];
+
+      for (const fn of tryCandidates) {
+        const res = fn();
+        if (res) return res.data;
+      }
+      return "";
+    }
+
+    function escapeHtml(value) {
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function normalizeDate(value) {
+      const s = String(value || "").trim();
+      if (!s) return "-";
+      const m = s.match(/([0-3]?\d)[\/.-]([0-1]?\d)[\/.-](\d{2,4})/);
+      if (m) {
+        const dd = m[1].padStart(2, "0");
+        const mm = m[2].padStart(2, "0");
+        const yy = (m[3].length === 2 ? "20" + m[3] : m[3]);
+        return dd + "-" + mm + "-" + yy;
+      }
+      return s;
+    }
+
+    function normalizeTime(value) {
+      const s = String(value || "").trim().toUpperCase().replace(/\./g, ":");
+      if (!s) return "-";
+      const m = s.match(/([0-2]?\d)\s*:\s*([0-5]\d)\s*(AM|PM)?/);
+      if (m) {
+        let hh = Number(m[1]);
+        const mm = m[2];
+        const mer = m[3];
+        if (mer) {
+          hh = hh % 12;
+          if (mer === "PM") hh += 12;
+        }
+        const h12 = ((hh + 11) % 12) + 1;
+        const merOut = hh >= 12 ? "PM" : "AM";
+        return String(h12).padStart(2, "0") + ":" + mm + " " + merOut;
+      }
+      return s;
+    }
+
+    function toBoolean(value) {
+      const s = String(value == null ? "" : value).trim().toLowerCase();
+      return s === "true" || s === "1" || s === "yes" || s === "completed";
+    }
+
+    function normalizeRows(rows) {
+      return (rows || []).map((r, idx) => ({
+        rowNumber: Number(r.rowNumber || idx + 2),
+        mfd: normalizeDate(r.mfd),
+        time: normalizeTime(r.time),
+        cuttingTime: normalizeTime(r.cuttingTime),
+        batch: String(r.batch || "").trim(),
+        serial: String(r.serial || "").trim(),
+        isCompleted: toBoolean(r.isCompleted)
+      }));
+    }
+
+    function groupByBatch(rows) {
+      const map = new Map();
+      rows.forEach((row) => {
+        const key = row.batch || "NO_BATCH";
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(row);
+      });
+      return map;
+    }
+
+    function groupBySerial(rows) {
+      const map = new Map();
+      rows.forEach((row) => {
+        const key = row.serial || "NO_SERIAL";
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(row);
+      });
+      return map;
+    }
+
+    function compareTextAsc(a, b) {
+      return String(a || "").localeCompare(String(b || ""), undefined, { numeric: true, sensitivity: "base" });
+    }
+
+    function compareGroupKeyAsc(a, b, missingKey) {
+      if (a === missingKey && b !== missingKey) return 1;
+      if (a !== missingKey && b === missingKey) return -1;
+      return compareTextAsc(a, b);
+    }
+
+    function isSerialGroupCompleted(serialRows) {
+      return serialRows.length > 0 && serialRows.every((r) => r.isCompleted);
+    }
+
+    function isBatchGroupCompleted(rows) {
+      const serialMap = groupBySerial(rows);
+      if (!serialMap.size) return false;
+      return Array.from(serialMap.values()).every((serialRows) => isSerialGroupCompleted(serialRows));
+    }
+
+    async function fetchRows() {
+      const url = SCRIPT_URL + (SCRIPT_URL.includes("?") ? "&" : "?") + "action=rows";
+      const response = await fetch(url);
+      const data = await response.json();
+      if (!response.ok || data.ok === false) throw new Error(data.error || "Fetch failed");
+      return data;
+    }
+
+    async function postUpdate(payload) {
+      const response = await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: new URLSearchParams(payload)
+      });
+      const data = await response.json();
+      if (!response.ok || data.ok === false) throw new Error(data.error || "Update failed");
+      return data;
+    }
+
+    function hideUndoToast() {
+      if (undoTimer) clearTimeout(undoTimer);
+      undoToast.classList.add("hidden");
+      lastUndoAction = null;
+    }
+
+    function showUndoToast(action) {
+      lastUndoAction = action;
+      undoText.textContent = "Marked completed for serial " + (action.serialLabel || "-") + ".";
+      undoToast.classList.remove("hidden");
+      undoTimer = setTimeout(hideUndoToast, 15000);
+    }
+
+    function updateLocalCompletion(rowNumbers, isCompleted) {
+      const set = new Set(rowNumbers.map(Number));
+      allRows = allRows.map((row) => set.has(Number(row.rowNumber)) ? { ...row, isCompleted } : row);
+    }
+
+    function askCompletionChange(action) {
+      pendingAction = action;
+      confirmText.textContent = `Do you want to ${action.isCompleted ? "mark as completed" : "undo completion"} for serial ${action.serialLabel}?`;
+      confirmModal.classList.remove("hidden");
+    }
+
+    async function applyPendingAction() {
+      if (!pendingAction) return;
+      const action = pendingAction;
+      pendingAction = null;
+      confirmModal.classList.add("hidden");
+      setStatus("Updating...", false);
+      try {
+        await postUpdate({ action: "set_completed", rowNumbers: action.rowNumbers.join(","), isCompleted: action.isCompleted });
+        updateLocalCompletion(action.rowNumbers, action.isCompleted);
+
+        // Refresh view
+        if (!serialView.classList.contains("hidden")) {
+          // In card view, refresh the card
+          const rows = allRows.filter(r => (r.batch || "NO_BATCH") === action.batch && (r.serial || "NO_SERIAL") === action.serialLabel);
+          if (rows.length) renderSerialCard(rows[0], rows);
+          else showBatchView();
+        } else {
+          renderBatches();
+        }
+
+        if (action.isCompleted) showUndoToast(action);
+        setStatus("Updated successfully.", false);
+      } catch (err) {
+        setStatus("Update failed: " + err.message, true);
+      }
+    }
+
+    function renderBatches() {
+      batchList.innerHTML = "";
+      const batchMap = groupByBatch(allRows);
+      if (!batchMap.size) { batchList.innerHTML = '<div class="empty">No data.</div>'; return; }
+      const entries = Array.from(batchMap.entries()).sort((a, b) => {
+        const aC = isBatchGroupCompleted(a[1]);
+        const bC = isBatchGroupCompleted(b[1]);
+        if (aC !== bC) return aC ? 1 : -1;
+        return compareGroupKeyAsc(a[0], b[0], "NO_BATCH");
+      });
+      entries.forEach(([batch, rows]) => {
+        const serialMap = groupBySerial(rows);
+        const item = document.createElement("div");
+        item.className = "batch-item";
+        item.innerHTML = `
+          <button class="batch-header">
+            <span class="drop-icon"><i class="bi bi-chevron-right"></i></span>
+            <div class="batch-info">
+              <p class="batch-name">${escapeHtml(batch === "NO_BATCH" ? "(No Batch)" : batch)}</p>
+              <div class="batch-meta">Serials: ${serialMap.size} | Completed: ${Array.from(serialMap.values()).filter(isSerialGroupCompleted).length}</div>
+              <div class="collapsed-serials" id="chips-${escapeHtml(batch)}"></div>
+            </div>
+          </button>
+          <div class="batch-content"><div id="list-${escapeHtml(batch)}"></div></div>
+        `;
+        const header = item.querySelector(".batch-header");
+        header.addEventListener("click", () => {
+          item.classList.toggle("expanded");
+          header.querySelector(".drop-icon").innerHTML = item.classList.contains("expanded") ? "<i class='bi bi-chevron-up'></i>" : "<i class='bi bi-chevron-right'></i>";
+        });
+        const chipBox = item.querySelector(".collapsed-serials");
+        const listBtnBox = item.querySelector(".batch-content div");
+
+        const sKeys = Array.from(serialMap.keys()).sort((a, b) => compareGroupKeyAsc(a, b, "NO_SERIAL"));
+        sKeys.forEach(sKey => {
+          const sRows = serialMap.get(sKey);
+          const isDone = isSerialGroupCompleted(sRows);
+          // Chip
+          const chip = document.createElement("span");
+          chip.className = "serial-chip" + (isDone ? " done" : "");
+          chip.textContent = sKey === "NO_SERIAL" ? "?" : sKey;
+          chipBox.appendChild(chip);
+
+          // List Item
+          const row = document.createElement("div");
+          row.style.padding = "10px 0";
+          row.style.borderBottom = "1px solid #e1eaf5";
+          row.innerHTML = `<div style="display:flex; justify-content:space-between; font-weight:700; font-size:13px; color:#10345d;">
+            <span>Serial: ${escapeHtml(sKey === "NO_SERIAL" ? "?" : sKey)}</span>
+            <span style="color:${isDone ? "#28a745" : "#778899"}">${isDone ? "DONE" : "PENDING"}</span>
+          </div>`;
+          listBtnBox.appendChild(row);
+        });
+        batchList.appendChild(item);
+      });
+    }
+
+    function showBatchView() {
+      serialView.classList.add("hidden");
+      batchView.classList.remove("hidden");
+      setStatus("Scan label.", false);
+    }
+
+    function showDirectCard(batchKey, serialKey) {
+      const rows = allRows.filter(r => (r.batch || "NO_BATCH") === batchKey && (r.serial || "NO_SERIAL") === serialKey);
+      if (rows.length) renderSerialCard(rows[0], rows);
+      else setStatus("Serial not found.", true);
+    }
+
+    function renderSerialCard(latest, serialRows) {
+      const isDone = isSerialGroupCompleted(serialRows);
+      const bText = (latest.batch || "NO_BATCH") === "NO_BATCH" ? "(No Batch)" : latest.batch;
+      const sText = (latest.serial || "NO_SERIAL") === "NO_SERIAL" ? "(No Serial)" : latest.serial;
+
+      cardContainer.innerHTML = `
+        <div class="card">
+          <div class="card-top">
+            <span>MFD: ${escapeHtml(latest.mfd || "-")}</span>
+            <span>Time: ${escapeHtml(latest.time || "-")}</span>
+          </div>
+          <div class="card-body">
+            <div class="cutting-section">
+              <div class="cutting-label">Cutting Time</div>
+              <p class="cutting-val">${escapeHtml(latest.cuttingTime || "-")}</p>
+            </div>
+            <div class="details-box">
+              <div class="detail-item"><div class="detail-label">Batch</div><div class="detail-val">${escapeHtml(bText)}</div></div>
+              <div class="detail-item"><div class="detail-label">Serial</div><div class="detail-val">${escapeHtml(sText)}</div></div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="big-complete-btn ${isDone ? "undo" : ""}" type="button">${isDone ? "Undo Completed" : "Completed"}</button>
+          </div>
+        </div>
+      `;
+      cardContainer.querySelector(".big-complete-btn").onclick = () => askCompletionChange({
+        rowNumbers: serialRows.map(r => r.rowNumber),
+        isCompleted: !isDone,
+        batch: bText,
+        serialLabel: sText
+      });
+      batchView.classList.add("hidden");
+      serialView.classList.remove("hidden");
+      selectedBatchLabel.textContent = "Viewing Serial: " + sText;
+    }
+
+    // Scan Confirmation Modal Elements
+    const scanConfirmModal = document.getElementById("scanConfirmModal");
+    const scanBatchInput = document.getElementById("scanBatchInput");
+    const scanSerialInput = document.getElementById("scanSerialInput");
+    const scanCancelBtn = document.getElementById("scanCancelBtn");
+    const scanSearchBtn = document.getElementById("scanSearchBtn");
+
+    // Scanner
+    cameraBtn.onclick = () => photoInput.click();
+    photoInput.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file || scanBusy) return;
+      scanBusy = true;
+      setStatus("Scanning...", false);
+      try {
+        const { imageSource, objectUrl } = await loadImageFromFile(file);
+
+        // Prepare canvas for OCR and multi-pass QR
+        drawImageToCanvas(imageSource, scanCanvas, scanCtx);
+        if (typeof imageSource.close === "function") imageSource.close();
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+
+        setStatus("Reading text...", false);
+        const ocr = await Tesseract.recognize(scanCanvas, "eng");
+        const sMatch = ocr.data.text.match(/(?:SERIAL|S\/N|SER)\s*[:\-\s]*(\d+)/i);
+        const serial = sMatch ? sMatch[1] : "";
+
+        setStatus("Scanning QR...", false);
+        const batch = readQRCodeFromCanvas(scanCanvas);
+
+        // Show validation modal
+        scanBatchInput.value = batch;
+        scanSerialInput.value = serial;
+        scanConfirmModal.classList.remove("hidden");
+        setStatus(batch ? "Found potential data. Please validate." : "QR not found. Please enter Batch manually.", !batch);
+      } catch (err) {
+        setStatus("Scan failed: " + err.message, true);
+      } finally {
+        scanBusy = false;
+        photoInput.value = "";
+      }
+    };
+
+    function drawImageToCanvas(imageSource, targetCanvas, targetCtx) {
+      const srcW = imageSource.width;
+      const srcH = imageSource.height;
+      const scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(srcW, srcH));
+      const drawW = Math.max(1, Math.round(srcW * scale));
+      const drawH = Math.max(1, Math.round(srcH * scale));
+      targetCanvas.width = drawW;
+      targetCanvas.height = drawH;
+      targetCtx.clearRect(0, 0, drawW, drawH);
+      targetCtx.drawImage(imageSource, 0, 0, drawW, drawH);
+    }
+
+    scanCancelBtn.onclick = () => scanConfirmModal.classList.add("hidden");
+    scanSearchBtn.onclick = () => {
+      const batch = scanBatchInput.value.trim();
+      const serial = scanSerialInput.value.trim();
+      if (!batch || !serial) {
+        alert("Please provide both Batch and Serial.");
+        return;
+      }
+      scanConfirmModal.classList.add("hidden");
+      const match = allRows.find(r => r.batch === batch && r.serial === serial);
+      if (match) {
+        renderSerialCard(match, allRows.filter(r => r.batch === batch && r.serial === serial));
+        setStatus("Found matching card.", false);
+      } else {
+        setStatus(`No record found for ${batch} / ${serial}`, true);
+      }
+    };
+
+    async function loadData() {
+      setStatus("Loading...", false);
+      try {
+        const data = await fetchRows();
+        allRows = normalizeRows(data.rows);
+        renderBatches();
+        showBatchView();
+      } catch (err) { setStatus("Load failed.", true); }
+    }
+
+    reloadBtn.onclick = loadData;
+    backBtn.onclick = showBatchView;
+    confirmCancelBtn.onclick = () => confirmModal.classList.add("hidden");
+    confirmOkBtn.onclick = applyPendingAction;
+    undoBtn.onclick = () => {
+      if (lastUndoAction) askCompletionChange({ ...lastUndoAction, isCompleted: false });
+      hideUndoToast();
+    };
+    undoCloseBtn.onclick = hideUndoToast;
+    loadData();
+  </script>
+</body>
+
+</html>
