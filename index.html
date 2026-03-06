@@ -553,7 +553,7 @@
 
     .batch-content {
       display: none;
-      padding: 0 12px 12px 42px;
+      padding: 12px;
       border-top: 1px dashed #d4e2f2;
       background: #f2f8ff;
     }
@@ -562,10 +562,11 @@
       display: block;
     }
 
+    /* Collapsed: small serial chip boxes */
     .collapsed-serials {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
+      gap: 5px;
       margin-top: 4px;
     }
 
@@ -574,17 +575,115 @@
       border-radius: 6px;
       background: #fff;
       color: #184a7d;
-      padding: 2px 6px;
+      padding: 2px 7px;
       font-size: 11px;
       font-weight: 700;
-      cursor: pointer;
     }
 
     .serial-chip.done {
-      color: #165f2f;
+      color: #166534;
       border-color: #9fd2b0;
-      background: #effbf3;
+      background: #f0fdf4;
     }
+
+    /* Hide chips when expanded, show grid */
+    .batch-item.expanded .collapsed-serials {
+      display: none;
+    }
+
+    /* Expanded: mini-card grid */
+    .mini-card-grid {
+      display: none;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .batch-item.expanded .mini-card-grid {
+      display: grid;
+    }
+
+    @media (min-width: 992px) {
+      .mini-card-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      }
+    }
+
+    /* Mini card — miniature of .card */
+    .mini-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      padding: 10px;
+      box-shadow: 0 3px 8px rgba(22, 56, 94, .06);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 10px;
+    }
+
+    .mini-card .mc-top {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+      color: #10345d;
+      font-size: 10px;
+    }
+
+    .mini-card .mc-cut-label {
+      color: #1f4670;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .mini-card .mc-cut-val {
+      font-size: 18px;
+      font-weight: 900;
+      color: #082846;
+      margin: 0;
+      line-height: 1.1;
+    }
+
+    .mini-card .mc-details {
+      border: 1px solid #d2e1f3;
+      border-radius: 8px;
+      background: #f7fbff;
+      padding: 5px 7px;
+    }
+
+    .mini-card .mc-detail-label {
+      color: #547697;
+      font-size: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .mini-card .mc-detail-val {
+      color: #11395f;
+      font-size: 10px;
+      font-weight: 800;
+      word-break: break-all;
+    }
+
+    .mini-card .mc-status {
+      text-align: center;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 4px 0;
+      border-radius: 6px;
+      letter-spacing: 0.03em;
+    }
+
+    .mini-card .mc-status.pending {
+      color: #6b7280;
+      background: #f3f4f6;
+    }
+
+    .mini-card .mc-status.completed {
+      color: #166534;
+      background: #dcfce7;
+    }
+
 
     /* Revised Card UI Styles */
     .card {
@@ -1167,50 +1266,66 @@
       });
       entries.forEach(([batch, rows]) => {
         const serialMap = groupBySerial(rows);
+        const completedCount = Array.from(serialMap.values()).filter(isSerialGroupCompleted).length;
         const item = document.createElement("div");
         item.className = "batch-item";
         item.innerHTML = `
           <button class="batch-header">
-            <span class="drop-icon"><i class="bi bi-chevron-right"></i></span>
             <div class="batch-info">
               <p class="batch-name">${escapeHtml(batch === "NO_BATCH" ? "(No Batch)" : batch)}</p>
-              <div class="batch-meta">Serials: ${serialMap.size} | Completed: ${Array.from(serialMap.values()).filter(isSerialGroupCompleted).length}</div>
-              <div class="collapsed-serials" id="chips-${escapeHtml(batch)}"></div>
+              <div class="batch-meta">Serials: ${serialMap.size} | Completed: ${completedCount}</div>
+              <div class="collapsed-serials"></div>
             </div>
+            <span class="drop-icon"><i class="bi bi-chevron-down"></i></span>
           </button>
-          <div class="batch-content"><div id="list-${escapeHtml(batch)}"></div></div>
+          <div class="batch-content"><div class="mini-card-grid"></div></div>
         `;
         const header = item.querySelector(".batch-header");
         header.addEventListener("click", () => {
           item.classList.toggle("expanded");
-          header.querySelector(".drop-icon").innerHTML = item.classList.contains("expanded") ? "<i class='bi bi-chevron-up'></i>" : "<i class='bi bi-chevron-right'></i>";
+          header.querySelector(".drop-icon").innerHTML = item.classList.contains("expanded") ? "<i class='bi bi-chevron-up'></i>" : "<i class='bi bi-chevron-down'></i>";
         });
         const chipBox = item.querySelector(".collapsed-serials");
-        const listBtnBox = item.querySelector(".batch-content div");
+        const grid = item.querySelector(".mini-card-grid");
 
         const sKeys = Array.from(serialMap.keys()).sort((a, b) => compareGroupKeyAsc(a, b, "NO_SERIAL"));
         sKeys.forEach(sKey => {
           const sRows = serialMap.get(sKey);
           const isDone = isSerialGroupCompleted(sRows);
-          // Chip
+          const latest = sRows[0];
+          const sLabel = sKey === "NO_SERIAL" ? "?" : sKey;
+          const bLabel = (batch === "NO_BATCH") ? "(No Batch)" : batch;
+
+          // Collapsed chip
           const chip = document.createElement("span");
           chip.className = "serial-chip" + (isDone ? " done" : "");
-          chip.textContent = sKey === "NO_SERIAL" ? "?" : sKey;
+          chip.textContent = sLabel;
           chipBox.appendChild(chip);
 
-          // List Item
-          const row = document.createElement("div");
-          row.style.padding = "10px 0";
-          row.style.borderBottom = "1px solid #e1eaf5";
-          row.innerHTML = `<div style="display:flex; justify-content:space-between; font-weight:700; font-size:13px; color:#10345d;">
-            <span>Serial: ${escapeHtml(sKey === "NO_SERIAL" ? "?" : sKey)}</span>
-            <span style="color:${isDone ? "#28a745" : "#778899"}">${isDone ? "DONE" : "PENDING"}</span>
-          </div>`;
-          listBtnBox.appendChild(row);
+          // Expanded mini-card (miniature of .card)
+          const mc = document.createElement("div");
+          mc.className = "mini-card";
+          mc.innerHTML = `
+            <div class="mc-top">
+              <span>${escapeHtml(latest.mfd || "-")}</span>
+              <span>${escapeHtml(latest.time || "-")}</span>
+            </div>
+            <div>
+              <div class="mc-cut-label">Cutting Time</div>
+              <p class="mc-cut-val">${escapeHtml(latest.cuttingTime || "-")}</p>
+            </div>
+            <div class="mc-details">
+              <div><span class="mc-detail-label">Batch</span><div class="mc-detail-val">${escapeHtml(bLabel)}</div></div>
+              <div style="margin-top:3px"><span class="mc-detail-label">Serial</span><div class="mc-detail-val">${escapeHtml(sLabel)}</div></div>
+            </div>
+            <div class="mc-status ${isDone ? "completed" : "pending"}">${isDone ? "Completed" : "Pending"}</div>
+          `;
+          grid.appendChild(mc);
         });
         batchList.appendChild(item);
       });
     }
+
 
     function showBatchView() {
       serialView.classList.add("hidden");
