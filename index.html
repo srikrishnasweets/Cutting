@@ -119,13 +119,9 @@
     .batch-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
     .batch-content {
-      display: none; padding: 12px;
+      padding: 12px;
       border-top: 1px dashed #d4e2f2; background: #f2f8ff;
     }
-    .batch-item.expanded .batch-content { display: block; }
-
-    .collapsed-serials { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
-    .batch-item.expanded .collapsed-serials { display: none; }
 
     .serial-chip {
       border: 1px solid var(--card-idle-border); border-radius: 6px;
@@ -136,8 +132,7 @@
     .serial-chip.late { color: #7f1d1d; border-color: #fca5a5; background: #fff1f2; }
     .serial-chip.warn { color: #713f12; border-color: #fde68a; background: #fefce8; }
 
-    .mini-card-grid { display: none; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .batch-item.expanded .mini-card-grid { display: grid; }
+    .mini-card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 
     @media (min-width: 760px) {
       .mini-card-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
@@ -349,15 +344,6 @@
       font-size: 12px; font-weight: 800; cursor: pointer;
     }
 
-    /* Legend */
-    .legend { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: var(--muted); }
-    .legend-dot  { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
-    .ld-idle { background: var(--card-idle-border); }
-    .ld-warn { background: var(--card-warn-border); }
-    .ld-done { background: var(--card-done-border); }
-    .ld-late { background: var(--card-late-border); }
-
     /* Smooth silent-refresh pulse on status pill */
     @keyframes silentPulse {
       0%   { opacity: 1; }
@@ -365,6 +351,51 @@
       100% { opacity: 1; }
     }
     .pulsing { animation: silentPulse 0.7s ease-in-out; }
+
+    /* ── STATUS CATEGORY SECTIONS ── */
+    .cat-section { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+    .cat-section:last-child { margin-bottom: 0; }
+
+    .cat-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; border-radius: 12px;
+      font-size: 13px; font-weight: 800; letter-spacing: 0.03em;
+    }
+
+    .cat-header .cat-dot {
+      width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+    }
+
+    .cat-header .cat-count {
+      margin-left: auto; font-size: 11px; font-weight: 800;
+      padding: 2px 8px; border-radius: 20px; background: rgba(0,0,0,0.08);
+    }
+
+    /* Category bg colours — very light tints */
+    .cat-upcoming  { background: #fff7ed; color: #7c2d12; }
+    .cat-upcoming  .cat-dot { background: #fb923c; }
+
+    .cat-warning   { background: #fefce8; color: #713f12; }
+    .cat-warning   .cat-dot { background: #eab308; }
+
+    .cat-completed { background: #f0fdf4; color: #14532d; }
+    .cat-completed .cat-dot { background: #22c55e; }
+
+    .cat-overdue   { background: #fff1f2; color: #7f1d1d; }
+    .cat-overdue   .cat-dot { background: #ef4444; }
+
+    /* Tinted section wrappers */
+    .cat-body {
+      display: flex; flex-direction: column; gap: 8px;
+      padding: 10px; border-radius: 14px; border: 1px solid transparent;
+    }
+    .cat-body.bg-upcoming  { background: rgba(255,247,237,0.55); border-color: #fed7aa; }
+    .cat-body.bg-warning   { background: rgba(254,252,232,0.55); border-color: #fde68a; }
+    .cat-body.bg-completed { background: rgba(240,253,244,0.55); border-color: #bbf7d0; }
+    .cat-body.bg-overdue   { background: rgba(255,241,242,0.55); border-color: #fecaca; }
+
+    /* Batch items inside category inherit a slightly adjusted look */
+    .cat-body .batch-item { background: #ffffff; }
   </style>
 </head>
 
@@ -375,15 +406,13 @@
       <div class="controls">
         <div id="status" class="status">Loading data...</div>
         <button id="cameraBtn" class="nav-btn scan-btn" type="button"><i class="bi bi-camera"></i></button>
-        <button id="reloadBtn" class="nav-btn" type="button">Reload</button>
       </div>
     </header>
 
     <section class="panel">
       <!-- BATCH VIEW -->
       <div id="batchView">
-        <h2 class="section-title">Batches</h2>
-        <div id="batchList" class="batch-stack"></div>
+        <div id="batchList"></div>
       </div>
 
       <!-- SERIAL CARD VIEW -->
@@ -488,7 +517,6 @@
     /* ── DOM ── */
     const statusEl           = document.getElementById("status");
     const cameraBtn          = document.getElementById("cameraBtn");
-    const reloadBtn          = document.getElementById("reloadBtn");
     const backBtn            = document.getElementById("backBtn");
     const batchView          = document.getElementById("batchView");
     const batchList          = document.getElementById("batchList");
@@ -623,55 +651,85 @@
     function statusOrder(s) { return { late:0, warn:1, idle:2, done:3 }[s] ?? 2; }
 
     /* ── RENDER BATCHES (preserves expand state on silent refresh) ── */
-    function renderBatches() {
-      // Remember expanded state
-      const expanded = new Set();
-      batchList.querySelectorAll(".batch-item.expanded").forEach(el => expanded.add(el.dataset.bk));
 
+    // Determine the "worst" (most urgent) status across all serials in a batch
+    function batchDominantStatus(rows) {
+      const statuses = rows.map(r => getCardStatus(r));
+      if (statuses.includes("late"))  return "late";
+      if (statuses.includes("warn"))  return "warn";
+      if (statuses.every(s => s === "done")) return "done";
+      return "idle";
+    }
+
+    function renderBatches() {
       batchList.innerHTML = "";
       const batchMap = groupBy(allRows, "batch");
       if (!batchMap.size) { batchList.innerHTML = '<div class="empty">No data.</div>'; return; }
 
-      Array.from(batchMap.entries())
-        .sort((a, b) => compareText(a[0], b[0]))
-        .forEach(([batch, rows]) => {
-          const serialMap  = groupBy(rows, "serial");
-          const doneCount  = Array.from(serialMap.values()).filter(isSerialDone).length;
-          const wasOpen    = expanded.has(batch);
+      // Sort batches by name, then bucket into 4 status categories
+      const sorted = Array.from(batchMap.entries()).sort((a, b) => compareText(a[0], b[0]));
+
+      const cats = {
+        idle: { label: "Upcoming",  cls: "cat-upcoming",  bg: "bg-upcoming",  items: [] },
+        warn: { label: "Waiting",   cls: "cat-warning",   bg: "bg-warning",   items: [] },
+        done: { label: "Completed", cls: "cat-completed", bg: "bg-completed", items: [] },
+        late: { label: "Overdue",   cls: "cat-overdue",   bg: "bg-overdue",   items: [] },
+      };
+      // Desired display order
+      const catOrder = ["idle", "warn", "late", "done"];
+
+      sorted.forEach(([batch, rows]) => {
+        const dom = batchDominantStatus(rows);
+        cats[dom].items.push([batch, rows]);
+      });
+
+      catOrder.forEach(catKey => {
+        const cat = cats[catKey];
+        if (!cat.items.length) return;
+
+        // Section wrapper
+        const section = document.createElement("div");
+        section.className = "cat-section";
+
+        // Header pill
+        const hdr = document.createElement("div");
+        hdr.className = "cat-header " + cat.cls;
+        hdr.innerHTML = `
+          <div class="cat-dot"></div>
+          <span>${cat.label}</span>
+          <span class="cat-count">${cat.items.length} batch${cat.items.length > 1 ? "es" : ""}</span>
+        `;
+        section.appendChild(hdr);
+
+        // Tinted body
+        const body = document.createElement("div");
+        body.className = "cat-body " + cat.bg;
+
+        cat.items.forEach(([batch, rows]) => {
+          const serialMap = groupBy(rows, "serial");
+          const doneCount = Array.from(serialMap.values()).filter(isSerialDone).length;
 
           const item = document.createElement("div");
-          item.className = "batch-item" + (wasOpen ? " expanded" : "");
+          item.className = "batch-item expanded";
           item.dataset.bk = batch;
 
           item.innerHTML = `
-            <button class="batch-header">
+            <div class="batch-header" style="cursor:default;">
               <div class="batch-info">
                 <p class="batch-name">${escapeHtml(batch === "NO_BATCH" ? "(No Batch)" : batch)}</p>
                 <div class="batch-meta">Serials: ${serialMap.size} | Completed: ${doneCount}</div>
-                <div class="collapsed-serials"></div>
               </div>
-              <span class="drop-icon"><i class="bi bi-chevron-${wasOpen ? "up" : "down"}"></i></span>
-            </button>
+            </div>
             <div class="batch-content"><div class="mini-card-grid"></div></div>
           `;
 
-          const header  = item.querySelector(".batch-header");
-          const chipBox = item.querySelector(".collapsed-serials");
+          const chipBox = document.createElement("div"); // unused but kept for chip appends below
           const grid    = item.querySelector(".mini-card-grid");
-
-          header.addEventListener("click", () => {
-            item.classList.toggle("expanded");
-            header.querySelector(".drop-icon").innerHTML =
-              item.classList.contains("expanded")
-                ? "<i class='bi bi-chevron-up'></i>"
-                : "<i class='bi bi-chevron-down'></i>";
-          });
 
           Array.from(serialMap.keys())
             .sort((a, b) => {
               const aDone = isSerialDone(serialMap.get(a));
               const bDone = isSerialDone(serialMap.get(b));
-              // Completed always go last; within each group sort by serial number
               if (aDone !== bDone) return aDone ? 1 : -1;
               return compareText(a, b);
             })
@@ -688,7 +746,7 @@
               chip.textContent = sLabel;
               chipBox.appendChild(chip);
 
-              // Mini card — clicking goes directly to card detail, NO confirm modal
+              // Mini card — read-only (scan-only access to Complete button)
               const mc = document.createElement("div");
               mc.className = "mini-card status-" + status;
               mc.innerHTML = `
@@ -700,7 +758,6 @@
                 <div class="mc-status-badge">${statusLabel(status)}</div>
               `;
               mc.addEventListener("click", () => {
-                // Read-only view — Complete button is NOT shown (scan-only access)
                 renderSerialCard(latest, sRows, false);
                 batchView.classList.add("hidden");
                 serialView.classList.remove("hidden");
@@ -710,8 +767,12 @@
               grid.appendChild(mc);
             });
 
-          batchList.appendChild(item);
+          body.appendChild(item);
         });
+
+        section.appendChild(body);
+        batchList.appendChild(section);
+      });
     }
 
     /* ── RENDER SERIAL CARD ── */
@@ -1040,7 +1101,6 @@
     /* ── EVENTS ── */
     cameraBtn.onclick      = () => startCamera();
     camCancelBtn.onclick   = () => { stopCamera(); camModal.classList.add("hidden"); setStatus("Ready", false); };
-    reloadBtn.onclick      = () => loadData(false);
     backBtn.onclick        = showBatchView;
     confirmCancelBtn.onclick = () => confirmModal.classList.add("hidden");
     confirmOkBtn.onclick     = applyPendingAction;
