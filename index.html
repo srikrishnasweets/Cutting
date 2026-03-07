@@ -10,7 +10,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
 
   <style>
@@ -26,11 +25,22 @@
       --ok: #137333;
       --danger: #b42318;
       --shadow: 0 8px 20px rgba(22, 56, 94, .14);
+
+      --card-idle-bg:      #fff7ed;
+      --card-idle-border:  #fb923c;
+      --card-idle-text:    #7c2d12;
+      --card-warn-bg:      #fefce8;
+      --card-warn-border:  #eab308;
+      --card-warn-text:    #713f12;
+      --card-done-bg:      #f0fdf4;
+      --card-done-border:  #22c55e;
+      --card-done-text:    #14532d;
+      --card-late-bg:      #fff1f2;
+      --card-late-border:  #ef4444;
+      --card-late-text:    #7f1d1d;
     }
 
-    * {
-      box-sizing: border-box
-    }
+    * { box-sizing: border-box }
 
     body {
       margin: 0;
@@ -43,759 +53,318 @@
       min-height: 100dvh;
     }
 
-    .page {
-      margin: 0 auto;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+    .page { margin: 0 auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
 
     .hero {
       background: linear-gradient(145deg, #ffffff, #eef5ff);
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      padding: 12px 16px;
-      box-shadow: var(--shadow);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
+      border: 1px solid var(--line); border-radius: 22px;
+      padding: 12px 16px; box-shadow: var(--shadow);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; flex-wrap: wrap;
     }
 
-    .hero-title {
-      margin: 0;
-      color: var(--accent);
-      font-size: 24px;
-      font-weight: 800;
-    }
-
-    .controls {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
+    .hero-title { margin: 0; color: var(--accent); font-size: 24px; font-weight: 800; }
+    .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
     .status {
-      font-size: 13px;
-      font-weight: 700;
-      color: #27476a;
-      padding: 6px 10px;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      background: #f4f8ff;
+      font-size: 13px; font-weight: 700; color: #27476a;
+      padding: 6px 10px; border: 1px solid var(--line);
+      border-radius: 10px; background: #f4f8ff;
     }
+    .status.err { color: var(--danger); border-color: #f9a8a8; background: #fff5f5; }
 
     .nav-btn {
-      border: 1px solid var(--line);
-      background: #f4f8ff;
-      color: #123a67;
-      border-radius: 10px;
-      min-height: 40px;
-      padding: 8px 12px;
-      font-size: 14px;
-      font-weight: 800;
-      cursor: pointer;
+      border: 1px solid var(--line); background: #f4f8ff;
+      color: #123a67; border-radius: 10px; min-height: 40px;
+      padding: 8px 12px; font-size: 14px; font-weight: 800; cursor: pointer;
     }
+    .nav-btn:hover { background: #e7f0ff }
 
-    .nav-btn:hover {
-      background: #e7f0ff
-    }
-
-    .scan-btn {
-      border-color: #8dc0ff;
-      background: #e9f2ff;
-      color: #0f3b6b;
-    }
-
-    .scan-btn:hover {
-      background: #dcecff;
-    }
+    .scan-btn { border-color: #8dc0ff; background: #e9f2ff; color: #0f3b6b; }
+    .scan-btn:hover { background: #dcecff; }
 
     .panel {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-      padding: 14px;
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: 18px; box-shadow: var(--shadow); padding: 14px;
     }
 
-    .hidden {
-      display: none !important
-    }
+    .hidden { display: none !important }
+    .section-title { margin: 0 0 10px; font-size: 18px; font-weight: 800; color: #123a67; }
 
-    .section-title {
-      margin: 0 0 10px;
-      font-size: 18px;
-      font-weight: 800;
-      color: #123a67;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-    }
-
-    @media(min-width:760px) {
-      .grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr))
-      }
-    }
-
-    .batch-btn {
-      width: 100%;
-      text-align: left;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #f8fbff;
-      cursor: pointer;
-      padding: 12px;
-      box-shadow: 0 5px 12px rgba(22, 56, 94, .08);
-    }
-
-    .batch-btn:hover {
-      border-color: #94b8ea;
-      background: #eef5ff;
-    }
-
-    .batch-name {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 800;
-      color: #10345d;
-    }
-
-    .batch-stack {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+    /* Batch list */
+    .batch-stack { display: flex; flex-direction: column; gap: 10px; }
 
     .batch-item {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #f8fbff;
-      overflow: hidden;
-      box-shadow: 0 5px 12px rgba(22, 56, 94, .08);
-    }
-
-    .batch-toggle {
-      width: 100%;
-      border: 0;
-      background: transparent;
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      text-align: left;
-      cursor: pointer;
-      padding: 12px;
-    }
-
-    .batch-toggle:hover {
-      background: #eef5ff;
-    }
-
-    .drop-icon {
-      flex: 0 0 auto;
-      width: 20px;
-      color: #2b5f98;
-      font-size: 14px;
-      line-height: 1.3;
-      font-weight: 900;
-      transform: translateY(1px);
-    }
-
-    .batch-main {
-      min-width: 0;
-      flex: 1;
-    }
-
-    .serial-chip-wrap {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      padding: 0 12px 12px 42px;
-      border-top: 1px dashed #d4e2f2;
-      background: #f2f8ff;
-    }
-
-    .serial-chip {
-      border: 1px solid #c9dbef;
-      border-radius: 8px;
-      background: #fff;
-      color: #184a7d;
-      padding: 4px 8px;
-      font-size: 12px;
-      font-weight: 800;
-      line-height: 1.2;
-      min-width: 36px;
-      text-align: center;
-    }
-
-    .serial-chip.done {
-      color: #165f2f;
-      border-color: #9fd2b0;
-      background: #effbf3;
-    }
-
-    .scan-gate-note {
-      margin: 0 0 10px;
-      font-size: 13px;
-      color: #345372;
-      font-weight: 700;
-      border: 1px dashed #b7cee8;
-      background: #f5f9ff;
-      border-radius: 10px;
-      padding: 8px 10px;
-    }
-
-    .meta {
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    #serialList {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      justify-content: start;
-      gap: 10px;
-    }
-
-    @media (max-width:768px) {
-      #serialList {
-        grid-template-columns: repeat(1, minmax(0, 1fr));
-      }
-    }
-
-    .card {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      background: #fff;
-      box-shadow: 0 5px 12px rgba(22, 56, 94, .08);
-      padding: 10px;
-    }
-
-    .label-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      color: #1d3f67;
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .label-main {
-      margin-top: 8px;
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      align-items: end;
-    }
-
-    .cutting-caption {
-      color: #1f4670;
-      font-size: 12px;
-      font-weight: 700;
-      margin-bottom: 2px;
-    }
-
-    .cutting-value {
-      margin: 0;
-      color: #082846;
-      font-size: 28px;
-      line-height: 1;
-      font-weight: 900;
-      letter-spacing: .5px;
-    }
-
-    .batch-serial {
-      border: 1px solid #d2e1f3;
-      border-radius: 10px;
-      background: #f7fbff;
-      padding: 6px 8px;
-      min-width: 116px;
-    }
-
-    .bs-row+.bs-row {
-      margin-top: 6px;
-      padding-top: 6px;
-      border-top: 1px dashed #d2e1f3;
-    }
-
-    .bs-key {
-      color: #547697;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .3px;
-    }
-
-    .bs-value {
-      color: #11395f;
-      font-size: 12px;
-      font-weight: 800;
-      word-break: break-word;
-      line-height: 1.25;
-    }
-
-    .kv {
-      display: grid;
-      grid-template-columns: 120px 1fr;
-      gap: 6px;
-      font-size: 13px;
-      margin-bottom: 3px;
-    }
-
-    .k {
-      color: var(--muted);
-      font-weight: 700
-    }
-
-    .v {
-      color: var(--ink);
-      font-weight: 700;
-      word-break: break-word
-    }
-
-    .card-actions {
-      margin-top: 8px;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .complete-btn {
-      border: none;
-      border-radius: 10px;
-      min-height: 38px;
-      padding: 8px 12px;
-      font-size: 13px;
-      font-weight: 800;
-      color: #fff;
-      background: #28A745;
-      cursor: pointer;
-    }
-
-    .complete-btn.undo {
-      background: #d9822b;
-    }
-
-    .empty {
-      padding: 24px;
-      text-align: center;
-      border: 1px dashed var(--line);
-      border-radius: 14px;
-      color: var(--muted);
-      font-weight: 700;
-      background: #f8fbff;
-    }
-
-    .err {
-      color: var(--danger)
-    }
-
-    .modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(10, 24, 43, .45);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 12px;
-      z-index: 999;
-    }
-
-    .modal-card {
-      width: min(460px, 100%);
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 14px;
-      box-shadow: var(--shadow);
-    }
-
-    .modal-title {
-      margin: 0 0 8px;
-      font-size: 18px;
-      color: #123a67;
-      font-weight: 800;
-    }
-
-    .modal-text {
-      margin: 0;
-      font-size: 14px;
-      color: #314d6b;
-      line-height: 1.5;
-    }
-
-    .modal-actions {
-      margin-top: 12px;
-      display: flex;
-      gap: 8px;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-    }
-
-    .modal-btn {
-      min-height: 40px;
-      border-radius: 10px;
-      border: 1px solid var(--line);
-      background: #f4f8ff;
-      color: #123a67;
-      font-size: 13px;
-      font-weight: 800;
-      padding: 8px 12px;
-      cursor: pointer;
-    }
-
-    .modal-btn.primary {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
-
-    .undo-toast {
-      position: fixed;
-      left: 12px;
-      right: 12px;
-      bottom: 12px;
-      z-index: 1000;
-      background: #0f223a;
-      color: #fff;
-      border-radius: 12px;
-      padding: 10px 12px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      box-shadow: var(--shadow);
-    }
-
-    .undo-actions {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-    }
-
-    .undo-btn {
-      border: 1px solid #9fc6ff;
-      color: #9fc6ff;
-      background: transparent;
-      border-radius: 8px;
-      min-height: 34px;
-      padding: 6px 10px;
-      font-size: 12px;
-      font-weight: 800;
-      cursor: pointer;
-    }
-
-    /* New Batch UI Styles */
-    .batch-item {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #f8fbff;
-      margin-bottom: 10px;
-      overflow: hidden;
-      box-shadow: 0 5px 12px rgba(22, 56, 94, .08);
+      border: 1px solid var(--line); border-radius: 14px;
+      background: #f8fbff; overflow: hidden;
+      box-shadow: 0 5px 12px rgba(22,56,94,.08);
     }
 
     .batch-header {
-      width: 100%;
-      border: 0;
-      background: transparent;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px;
-      cursor: pointer;
-      text-align: left;
+      width: 100%; border: 0; background: transparent;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px; cursor: pointer; text-align: left;
     }
-
-    .batch-header:hover {
-      background: #eef5ff;
-    }
+    .batch-header:hover { background: #eef5ff; }
 
     .drop-icon {
-      transition: transform 0.2s;
-      font-size: 18px;
-      color: var(--accent);
-      width: 24px;
-      text-align: center;
-      order: 2;
+      flex: 0 0 auto; transition: transform 0.2s;
+      font-size: 18px; color: var(--accent);
+      width: 24px; text-align: center; order: 2;
     }
+    .batch-item.expanded .drop-icon { transform: rotate(180deg); }
 
-    .batch-item.expanded .drop-icon {
-      transform: rotate(180deg);
-    }
-
-    .batch-info {
-      flex: 1;
-    }
-
-    .batch-name {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 800;
-      color: #10345d;
-    }
-
-    .batch-meta {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
+    .batch-info { flex: 1; }
+    .batch-name { margin: 0; font-size: 16px; font-weight: 800; color: #10345d; }
+    .batch-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
     .batch-content {
-      display: none;
-      padding: 12px;
-      border-top: 1px dashed #d4e2f2;
-      background: #f2f8ff;
+      display: none; padding: 12px;
+      border-top: 1px dashed #d4e2f2; background: #f2f8ff;
     }
+    .batch-item.expanded .batch-content { display: block; }
 
-    .batch-item.expanded .batch-content {
-      display: block;
-    }
-
-    /* Collapsed: small serial chip boxes */
-    .collapsed-serials {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      margin-top: 4px;
-    }
+    .collapsed-serials { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+    .batch-item.expanded .collapsed-serials { display: none; }
 
     .serial-chip {
-      border: 1px solid #c9dbef;
-      border-radius: 6px;
-      background: #fff;
-      color: #184a7d;
-      padding: 2px 7px;
-      font-size: 11px;
-      font-weight: 700;
+      border: 1px solid var(--card-idle-border); border-radius: 6px;
+      background: var(--card-idle-bg); color: var(--card-idle-text);
+      padding: 2px 7px; font-size: 11px; font-weight: 700;
+    }
+    .serial-chip.done { color: #166534; border-color: #9fd2b0; background: #f0fdf4; }
+    .serial-chip.late { color: #7f1d1d; border-color: #fca5a5; background: #fff1f2; }
+    .serial-chip.warn { color: #713f12; border-color: #fde68a; background: #fefce8; }
+
+    .mini-card-grid { display: none; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .batch-item.expanded .mini-card-grid { display: grid; }
+
+    @media (min-width: 760px) {
+      .mini-card-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
     }
 
-    .serial-chip.done {
-      color: #166534;
-      border-color: #9fd2b0;
-      background: #f0fdf4;
-    }
-
-    /* Hide chips when expanded, show grid */
-    .batch-item.expanded .collapsed-serials {
-      display: none;
-    }
-
-    /* Expanded: mini-card grid */
-    .mini-card-grid {
-      display: none;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
-
-    .batch-item.expanded .mini-card-grid {
-      display: grid;
-    }
-
-    @media (min-width: 992px) {
-      .mini-card-grid {
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      }
-    }
-
-    /* Mini card — miniature of .card */
     .mini-card {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      background: #fff;
-      padding: 10px;
-      box-shadow: 0 3px 8px rgba(22, 56, 94, .06);
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      font-size: 10px;
+      border-radius: 12px; padding: 10px;
+      box-shadow: 0 3px 8px rgba(22,56,94,.08);
+      display: flex; flex-direction: column; gap: 5px;
+      font-size: 10px; cursor: pointer;
+      transition: filter 0.15s, background 0.5s, border-color 0.5s;
+      border-width: 2px; border-style: solid;
+    }
+    .mini-card:hover { filter: brightness(0.96); }
+
+    .mini-card.status-idle { background: var(--card-idle-bg); border-color: var(--card-idle-border); }
+    .mini-card.status-warn { background: var(--card-warn-bg); border-color: var(--card-warn-border); }
+    .mini-card.status-done { background: var(--card-done-bg); border-color: var(--card-done-border); }
+    .mini-card.status-late { background: var(--card-late-bg); border-color: var(--card-late-border); }
+
+    .mini-card .mc-serial    { font-size: 13px; font-weight: 900; color: inherit; }
+    .mini-card .mc-cut-label { font-size: 9px; font-weight: 700; opacity: 0.7; text-transform: uppercase; }
+    .mini-card .mc-cut-val   { font-size: 20px; font-weight: 900; margin: 0; line-height: 1.1; color: inherit; }
+    .mini-card .mc-status-badge {
+      text-align: center; font-size: 10px; font-weight: 800;
+      text-transform: uppercase; padding: 3px 0; border-radius: 6px;
+      letter-spacing: 0.04em; background: rgba(0,0,0,0.07); margin-top: 2px;
     }
 
-    .mini-card .mc-top {
-      display: flex;
-      justify-content: space-between;
-      font-weight: 700;
-      color: #10345d;
-      font-size: 10px;
-    }
-
-    .mini-card .mc-cut-label {
-      color: #1f4670;
-      font-size: 9px;
-      font-weight: 700;
-    }
-
-    .mini-card .mc-cut-val {
-      font-size: 18px;
-      font-weight: 900;
-      color: #082846;
-      margin: 0;
-      line-height: 1.1;
-    }
-
-    .mini-card .mc-details {
-      border: 1px solid #d2e1f3;
-      border-radius: 8px;
-      background: #f7fbff;
-      padding: 5px 7px;
-    }
-
-    .mini-card .mc-detail-label {
-      color: #547697;
-      font-size: 8px;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-
-    .mini-card .mc-detail-val {
-      color: #11395f;
-      font-size: 10px;
-      font-weight: 800;
-      word-break: break-all;
-    }
-
-    .mini-card .mc-status {
-      text-align: center;
-      font-size: 10px;
-      font-weight: 800;
-      text-transform: uppercase;
-      padding: 4px 0;
-      border-radius: 6px;
-      letter-spacing: 0.03em;
-    }
-
-    .mini-card .mc-status.pending {
-      color: #6b7280;
-      background: #f3f4f6;
-    }
-
-    .mini-card .mc-status.completed {
-      color: #166534;
-      background: #dcfce7;
-    }
-
-
-    /* Revised Card UI Styles */
+    /* Serial card */
     .card {
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      background: #fff;
-      padding: 20px;
-      box-shadow: 0 10px 25px rgba(22, 56, 94, .1);
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      position: relative;
+      border-radius: 20px; padding: 20px;
+      box-shadow: 0 10px 25px rgba(22,56,94,.12);
+      display: flex; flex-direction: column; gap: 15px;
+      border-width: 2px; border-style: solid;
+      transition: background 0.5s, border-color 0.5s;
+    }
+    .card.status-idle { background: var(--card-idle-bg); border-color: var(--card-idle-border); }
+    .card.status-warn { background: var(--card-warn-bg); border-color: var(--card-warn-border); }
+    .card.status-done { background: var(--card-done-bg); border-color: var(--card-done-border); }
+    .card.status-late { background: var(--card-late-bg); border-color: var(--card-late-border); }
+
+    .card-top { display: flex; justify-content: space-between; font-weight: 800; font-size: 13px; }
+
+    .status-label-pill {
+      padding: 4px 10px; border-radius: 20px;
+      font-size: 12px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.04em;
+      background: rgba(0,0,0,0.08);
     }
 
-    .card-top {
-      display: flex;
-      justify-content: space-between;
-      color: #10345d;
-      font-weight: 800;
-      font-size: 14px;
-    }
-
-    .card-body {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-
-    .cutting-section {
-      flex: 1;
-      min-width: 150px;
-    }
-
-    .cutting-label {
-      color: #1f4670;
-      font-size: 14px;
-      font-weight: 700;
-      margin-bottom: 5px;
-    }
-
-    .cutting-val {
-      font-size: 42px;
-      font-weight: 900;
-      color: #082846;
-      margin: 0;
-      letter-spacing: 0.5px;
-    }
+    .card-body { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
+    .cutting-section { flex: 1; min-width: 150px; }
+    .cutting-label { font-size: 14px; font-weight: 700; margin-bottom: 5px; opacity: 0.75; }
+    .cutting-val   { font-size: 42px; font-weight: 900; margin: 0; letter-spacing: 0.5px; line-height: 1; }
 
     .details-box {
-      border: 1px solid #d2e1f3;
-      border-radius: 15px;
-      background: #f7fbff;
-      padding: 12px 15px;
-      min-width: 140px;
+      border: 1px solid rgba(0,0,0,0.12); border-radius: 15px;
+      background: rgba(255,255,255,0.55); padding: 12px 15px; min-width: 140px;
     }
+    .detail-item { margin-bottom: 10px; }
+    .detail-item:last-child { margin-bottom: 0; }
+    .detail-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.65; }
+    .detail-val   { font-size: 14px; font-weight: 800; }
 
-    .detail-item {
-      margin-bottom: 10px;
-    }
-
-    .detail-item:last-child {
-      margin-bottom: 0;
-    }
-
-    .detail-label {
-      color: #547697;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .detail-val {
-      color: #11395f;
-      font-size: 14px;
-      font-weight: 800;
-    }
-
-    .card-footer {
-      margin-top: 10px;
-    }
+    .card-footer { margin-top: 5px; }
 
     .big-complete-btn {
-      width: fit-content;
-      min-width: 150px;
-      height: 48px;
-      border: none;
-      border-radius: 12px;
-      background: #28a745;
-      color: #fff;
-      font-size: 18px;
-      font-weight: 800;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
+      width: fit-content; min-width: 150px; height: 48px;
+      border: none; border-radius: 12px; color: #fff;
+      font-size: 16px; font-weight: 800; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; transition: all 0.2s; padding: 0 20px;
+    }
+    .big-complete-btn.mark      { background: #22c55e; }
+    .big-complete-btn.mark:hover{ background: #16a34a; }
+    .big-complete-btn.undo      { background: #f97316; }
+    .big-complete-btn.undo:hover{ background: #ea6e00; }
+
+    .empty {
+      padding: 24px; text-align: center;
+      border: 1px dashed var(--line); border-radius: 14px;
+      color: var(--muted); font-weight: 700; background: #f8fbff;
     }
 
-    .big-complete-btn:hover {
-      filter: brightness(1.1);
+    /* Camera modal */
+    .cam-modal {
+      position: fixed; inset: 0; background: rgba(10,24,43,.7);
+      display: flex; align-items: center; justify-content: center;
+      padding: 12px; z-index: 900;
+    }
+    .cam-card {
+      width: min(480px, 100%); background: #fff;
+      border: 1px solid var(--line); border-radius: 20px;
+      padding: 14px; box-shadow: var(--shadow);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .cam-title { margin: 0; font-size: 17px; font-weight: 800; color: #123a67; }
+
+    .camera-wrap {
+      position: relative; border: 1px solid var(--line);
+      border-radius: 14px; overflow: hidden;
+      background: #0f223a; aspect-ratio: 4/3;
+    }
+    #cameraVideo { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .scan-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none;
+    }
+    .scan-frame { width: 62%; aspect-ratio: 1; position: relative; }
+    .scan-frame::before, .scan-frame::after,
+    .scan-frame .corner-br, .scan-frame .corner-bl {
+      content: ""; position: absolute; width: 22px; height: 22px;
+      border-color: rgba(30,111,217,0.95); border-style: solid;
+    }
+    .scan-frame::before  { top:0; left:0;  border-width:3px 0 0 3px; border-radius:4px 0 0 0; }
+    .scan-frame::after   { top:0; right:0; border-width:3px 3px 0 0; border-radius:0 4px 0 0; }
+    .scan-frame .corner-br { bottom:0; right:0; border-width:0 3px 3px 0; border-radius:0 0 4px 0; }
+    .scan-frame .corner-bl { bottom:0; left:0;  border-width:0 0 3px 3px; border-radius:0 0 0 4px; }
+
+    .scan-line {
+      position: absolute; left: 6px; right: 6px; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      border-radius: 2px; animation: scanMove 1.8s ease-in-out infinite; top: 6px;
+    }
+    @keyframes scanMove {
+      0%   { top: 6px; opacity:1; }
+      95%  { top: calc(100% - 8px); opacity:1; }
+      100% { top: calc(100% - 8px); opacity:0; }
     }
 
-    .big-complete-btn:active {
-      transform: scale(0.98);
+    .loading-overlay {
+      position: absolute; inset: 0; background: rgba(15,34,58,0.72);
+      backdrop-filter: blur(2px); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 12px; border-radius: 14px;
+    }
+    .spinner {
+      width: 44px; height: 44px; border: 4px solid rgba(255,255,255,0.2);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-label { color: #fff; font-size: 13px; font-weight: 700; }
+
+    .scan-steps {
+      display: flex; gap: 8px; align-items: center;
+      justify-content: center; flex-wrap: wrap;
+    }
+    .step-pill {
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;
+      border: 1.5px solid var(--line); background: #f4f8ff; color: var(--muted);
+      transition: all 0.3s;
+    }
+    .step-pill.active { background: rgba(30,111,217,.1); border-color: var(--accent); color: var(--accent); }
+    .step-pill.done   { background: rgba(19,115,51,.1);  border-color: var(--ok);    color: var(--ok); }
+    .step-dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
+    .step-pill.active .step-dot { animation: dotPulse 1s ease-in-out infinite; }
+    @keyframes dotPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+
+    .qr-found-ring {
+      position: absolute; inset: 0; border: 3px solid #22c55e;
+      border-radius: 14px; animation: ringPulse 0.5s ease-out forwards; pointer-events: none;
+    }
+    @keyframes ringPulse { from{opacity:1;transform:scale(.96)} to{opacity:0;transform:scale(1.02)} }
+
+    .cam-cancel-btn {
+      align-self: center; min-height: 40px; border-radius: 10px;
+      padding: 8px 18px; font-size: 14px; font-weight: 800;
+      cursor: pointer; border: 1px solid var(--line); background: #f4f8ff; color: #123a67;
+    }
+    .cam-cancel-btn:hover { background: #e2ecff; }
+
+    /* Confirm modal */
+    .modal {
+      position: fixed; inset: 0; background: rgba(10,24,43,.45);
+      display: flex; align-items: center; justify-content: center;
+      padding: 12px; z-index: 999;
+    }
+    .modal-card {
+      width: min(460px, 100%); background: #fff;
+      border: 1px solid var(--line); border-radius: 16px;
+      padding: 14px; box-shadow: var(--shadow);
+    }
+    .modal-title { margin: 0 0 8px; font-size: 18px; color: #123a67; font-weight: 800; }
+    .modal-text  { margin: 0; font-size: 14px; color: #314d6b; line-height: 1.5; }
+    .modal-actions { margin-top: 12px; display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+    .modal-btn {
+      min-height: 40px; border-radius: 10px;
+      border: 1px solid var(--line); background: #f4f8ff;
+      color: #123a67; font-size: 13px; font-weight: 800; padding: 8px 12px; cursor: pointer;
+    }
+    .modal-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* Undo toast */
+    .undo-toast {
+      position: fixed; left: 12px; right: 12px; bottom: 12px;
+      z-index: 1000; background: #0f223a; color: #fff;
+      border-radius: 12px; padding: 10px 12px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; box-shadow: var(--shadow);
+    }
+    .undo-actions { display: flex; gap: 6px; align-items: center; }
+    .undo-btn {
+      border: 1px solid #9fc6ff; color: #9fc6ff; background: transparent;
+      border-radius: 8px; min-height: 34px; padding: 6px 10px;
+      font-size: 12px; font-weight: 800; cursor: pointer;
     }
 
-    .big-complete-btn.undo {
-      background: #d9822b;
+    /* Legend */
+    .legend { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: var(--muted); }
+    .legend-dot  { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+    .ld-idle { background: var(--card-idle-border); }
+    .ld-warn { background: var(--card-warn-border); }
+    .ld-done { background: var(--card-done-border); }
+    .ld-late { background: var(--card-late-border); }
+
+    /* Smooth silent-refresh pulse on status pill */
+    @keyframes silentPulse {
+      0%   { opacity: 1; }
+      40%  { opacity: 0.45; }
+      100% { opacity: 1; }
     }
+    .pulsing { animation: silentPulse 0.7s ease-in-out; }
   </style>
 </head>
 
@@ -807,28 +376,58 @@
         <div id="status" class="status">Loading data...</div>
         <button id="cameraBtn" class="nav-btn scan-btn" type="button"><i class="bi bi-camera"></i></button>
         <button id="reloadBtn" class="nav-btn" type="button">Reload</button>
-        <input id="photoInput" type="file" accept="image/*" capture="environment" class="hidden">
       </div>
     </header>
 
     <section class="panel">
+      <!-- BATCH VIEW -->
       <div id="batchView">
         <h2 class="section-title">Batches</h2>
         <div id="batchList" class="batch-stack"></div>
       </div>
 
+      <!-- SERIAL CARD VIEW -->
       <div id="serialView" class="hidden">
         <div class="controls" style="margin-bottom:15px;">
-          <button id="backBtn" class="nav-btn" type="button">Back To Batches</button>
+          <button id="backBtn" class="nav-btn" type="button">← Back To Batches</button>
           <div id="selectedBatchLabel" class="status"></div>
         </div>
-        <h2 class="section-title">Scanned Card</h2>
+        <h2 class="section-title">Card Detail</h2>
         <div id="cardContainer"></div>
       </div>
     </section>
+
     <canvas id="scanCanvas" class="hidden"></canvas>
   </main>
 
+  <!-- CAMERA MODAL -->
+  <div id="camModal" class="cam-modal hidden">
+    <div class="cam-card">
+      <p class="cam-title"><i class="bi bi-camera"></i> Live Scanner</p>
+      <div class="camera-wrap" id="cameraWrap">
+        <video id="cameraVideo" autoplay playsinline muted></video>
+        <div class="scan-overlay">
+          <div class="scan-frame">
+            <div class="corner-br"></div>
+            <div class="corner-bl"></div>
+            <div class="scan-line"></div>
+          </div>
+        </div>
+        <div class="loading-overlay hidden" id="loadingOverlay">
+          <div class="spinner"></div>
+          <div class="loading-label" id="loadingLabel">Reading label…</div>
+        </div>
+      </div>
+      <div class="scan-steps">
+        <div class="step-pill active" id="step1"><div class="step-dot"></div>Scanning QR</div>
+        <div class="step-pill" id="step2"><div class="step-dot"></div>Reading Text</div>
+        <div class="step-pill" id="step3"><div class="step-dot"></div>Done</div>
+      </div>
+      <button id="camCancelBtn" class="cam-cancel-btn" type="button">Cancel</button>
+    </div>
+  </div>
+
+  <!-- CONFIRM MODAL -->
   <div id="confirmModal" class="modal hidden">
     <div class="modal-card">
       <h3 class="modal-title">Please Confirm</h3>
@@ -840,6 +439,7 @@
     </div>
   </div>
 
+  <!-- UNDO TOAST -->
   <div id="undoToast" class="undo-toast hidden">
     <div id="undoText">Marked completed.</div>
     <div class="undo-actions">
@@ -848,265 +448,132 @@
     </div>
   </div>
 
-  <!-- Scan Validation Modal -->
-  <div id="scanConfirmModal" class="modal hidden">
+  <!-- MANUAL SERIAL ENTRY MODAL (shown when serial not detected) -->
+  <div id="manualModal" class="modal hidden">
     <div class="modal-card">
-      <h3 class="modal-title">Validate Scanned Data</h3>
-      <p class="modal-text" style="margin-bottom:12px;">Please confirm or correct the detected values before searching.
-      </p>
-
-      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px;">
-        <div>
-          <label style="font-size:11px; font-weight:800; color:var(--muted); text-transform:uppercase;">Batch (QR /
-            Manual)</label>
-          <input id="scanBatchInput" type="text"
-            style="width:100%; padding:10px; border:1px solid var(--line); border-radius:10px; font-weight:700;">
-        </div>
-        <div>
-          <label style="font-size:11px; font-weight:800; color:var(--muted); text-transform:uppercase;">Serial</label>
-          <input id="scanSerialInput" type="text"
-            style="width:100%; padding:10px; border:1px solid var(--line); border-radius:10px; font-weight:700;">
-        </div>
+      <h3 class="modal-title">Serial Not Detected</h3>
+      <p class="modal-text" style="margin-bottom:12px;">QR batch was read but the serial number could not be detected. Enter it manually to find the card.</p>
+      <div style="margin-bottom:4px;">
+        <label style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:4px;">Batch</label>
+        <div id="manualBatchDisplay" style="padding:10px 12px;background:#f4f8ff;border:1px solid var(--line);border-radius:10px;font-weight:700;font-size:14px;color:#0f223a;"></div>
       </div>
-
+      <div style="margin-top:10px;margin-bottom:4px;">
+        <label for="manualSerialInput" style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:4px;">Serial Number</label>
+        <input id="manualSerialInput" type="text" inputmode="numeric"
+          style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-weight:700;font-size:14px;font-family:inherit;outline:none;"
+          placeholder="Enter serial…">
+      </div>
       <div class="modal-actions">
-        <button id="scanCancelBtn" class="modal-btn" type="button">Cancel</button>
-        <button id="scanSearchBtn" class="modal-btn primary" type="button">Search Card</button>
+        <button id="manualCancelBtn" class="modal-btn" type="button">Cancel</button>
+        <button id="manualSearchBtn" class="modal-btn primary" type="button">Find Card</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOT-FOUND MODAL -->
+  <div id="notFoundModal" class="modal hidden">
+    <div class="modal-card">
+      <h3 class="modal-title">Card Not Found</h3>
+      <p id="notFoundText" class="modal-text"></p>
+      <div class="modal-actions">
+        <button id="notFoundCloseBtn" class="modal-btn primary" type="button">OK</button>
       </div>
     </div>
   </div>
 
   <script>
-    // Use your deployed Apps Script URL here.
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQf0Y1dn-pND2oj9dGQyjmMa1qG0cR5vlBpHnsiRk9cSE1SxqktCJgitd_00Mpoj4Z6g/exec";
+    const SCRIPT_URL  = "https://script.google.com/macros/s/AKfycbzgAEH3WSFmbobQfIAmBBHZYUVsJcbcE0njXHVADtVR0cnC3AZ1j1qEFA6Cdbp6zsC49w/exec";
+    const OCR_API_KEY = "K88514410288957";
 
-    const statusEl = document.getElementById("status");
-    const cameraBtn = document.getElementById("cameraBtn"); // matches id in HTML
-    const photoInput = document.getElementById("photoInput"); // matches id in HTML
-    const reloadBtn = document.getElementById("reloadBtn");
-    const backBtn = document.getElementById("backBtn");
-    const batchView = document.getElementById("batchView");
-    const batchList = document.getElementById("batchList");
-    const serialView = document.getElementById("serialView");
-    const cardContainer = document.getElementById("cardContainer");
+    /* ── DOM ── */
+    const statusEl           = document.getElementById("status");
+    const cameraBtn          = document.getElementById("cameraBtn");
+    const reloadBtn          = document.getElementById("reloadBtn");
+    const backBtn            = document.getElementById("backBtn");
+    const batchView          = document.getElementById("batchView");
+    const batchList          = document.getElementById("batchList");
+    const serialView         = document.getElementById("serialView");
+    const cardContainer      = document.getElementById("cardContainer");
     const selectedBatchLabel = document.getElementById("selectedBatchLabel");
-    const scanCanvas = document.getElementById("scanCanvas");
-    const scanCtx = scanCanvas.getContext("2d");
+    const scanCanvas         = document.getElementById("scanCanvas");
+    const scanCtx            = scanCanvas.getContext("2d");
+    const camModal           = document.getElementById("camModal");
+    const cameraWrap         = document.getElementById("cameraWrap");
+    const cameraVideo        = document.getElementById("cameraVideo");
+    const loadingOverlay     = document.getElementById("loadingOverlay");
+    const loadingLabel       = document.getElementById("loadingLabel");
+    const camCancelBtn       = document.getElementById("camCancelBtn");
+    const step1              = document.getElementById("step1");
+    const step2              = document.getElementById("step2");
+    const step3              = document.getElementById("step3");
+    const confirmModal       = document.getElementById("confirmModal");
+    const confirmText        = document.getElementById("confirmText");
+    const confirmCancelBtn   = document.getElementById("confirmCancelBtn");
+    const confirmOkBtn       = document.getElementById("confirmOkBtn");
+    const undoToast          = document.getElementById("undoToast");
+    const undoText           = document.getElementById("undoText");
+    const undoBtn            = document.getElementById("undoBtn");
+    const undoCloseBtn       = document.getElementById("undoCloseBtn");
+    const manualModal        = document.getElementById("manualModal");
+    const manualBatchDisplay = document.getElementById("manualBatchDisplay");
+    const manualSerialInput  = document.getElementById("manualSerialInput");
+    const manualCancelBtn    = document.getElementById("manualCancelBtn");
+    const manualSearchBtn    = document.getElementById("manualSearchBtn");
+    const notFoundModal      = document.getElementById("notFoundModal");
+    const notFoundText       = document.getElementById("notFoundText");
+    const notFoundCloseBtn   = document.getElementById("notFoundCloseBtn");
 
-    const confirmModal = document.getElementById("confirmModal");
-    const confirmText = document.getElementById("confirmText");
-    const confirmCancelBtn = document.getElementById("confirmCancelBtn");
-    const confirmOkBtn = document.getElementById("confirmOkBtn");
+    // Pending batch key while user types serial in manual modal
+    let pendingManualBatch = "";
 
-    const undoToast = document.getElementById("undoToast");
-    const undoText = document.getElementById("undoText");
-    const undoBtn = document.getElementById("undoBtn");
-    const undoCloseBtn = document.getElementById("undoCloseBtn");
-
-    let allRows = [];
-    let pendingAction = null;
+    /* ── STATE ── */
+    let allRows        = [];
+    let pendingAction  = null;
     let lastUndoAction = null;
-    let undoTimer = null;
-    let scanBusy = false;
-    let activeBatch = "";
+    let undoTimer      = null;
+    let mediaStream    = null;
+    let scanLoopId     = null;
+    let scanActive     = false;
+    let qrRingEl       = null;
+    let autoRefreshId  = null;
+    // Track the currently open card so auto-refresh can re-render it in place
+    let activeCardBatch  = null;
+    let activeCardSerial = null;
 
-    const MAX_IMAGE_SIDE = 1920;
-    const IMAGE_LOAD_TIMEOUT_MS = 20000;
-
+    /* ── STATUS ── */
     function setStatus(text, isError) {
       statusEl.textContent = text;
       statusEl.className = "status" + (isError ? " err" : "");
     }
 
-    function withTimeout(promise, timeoutMs, errorMessage) {
-      let timeoutId;
-      const timeoutPromise = new Promise((_, reject) => {
-        timeoutId = setTimeout(() => reject(new Error(errorMessage)), timeoutMs);
-      });
-      return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
+    /* ── CARD STATUS ── */
+    function getCardStatus(row) {
+      if (row.isCompleted) return "done";
+      const m = (row.cuttingTime || "").match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+      if (!m) return "idle";
+      const now = new Date();
+      let h = parseInt(m[1], 10);
+      const min = parseInt(m[2], 10);
+      const mer = (m[3] || "").toUpperCase();
+      if (mer === "AM") { if (h === 12) h = 0; }
+      else if (mer === "PM") { if (h !== 12) h += 12; }
+      const cut = new Date(now);
+      cut.setHours(h, min, 0, 0);
+      const diff = (cut - now) / 60000;
+      if (diff < 0)  return "late";
+      if (diff <= 5) return "warn";
+      return "idle";
     }
 
-    function readFileAsDataUrl(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(new Error("Unable to read selected image."));
-        reader.readAsDataURL(file);
-      });
+    function statusLabel(s) {
+      return { done:"Completed", late:"Overdue", warn:"Warning", idle:"Upcoming" }[s] || "Upcoming";
     }
 
-    function loadImageElement(src) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error("Unable to decode selected image."));
-        img.src = src;
-      });
-    }
-
-    async function loadImageFromFile(file) {
-      let objectUrl = "";
-      let imageSource = null;
-      let previewSrc = "";
-
-      if (typeof createImageBitmap === "function") {
-        try {
-          imageSource = await withTimeout(
-            createImageBitmap(file),
-            IMAGE_LOAD_TIMEOUT_MS,
-            "Photo decode timed out."
-          );
-          objectUrl = URL.createObjectURL(file);
-          previewSrc = objectUrl;
-          return { imageSource, objectUrl, previewSrc };
-        } catch (e) { }
-      }
-
-      try {
-        objectUrl = URL.createObjectURL(file);
-        const img = await withTimeout(
-          loadImageElement(objectUrl),
-          IMAGE_LOAD_TIMEOUT_MS,
-          "Photo load timed out."
-        );
-        imageSource = img;
-        previewSrc = objectUrl;
-        return { imageSource, objectUrl, previewSrc };
-      } catch (e) {
-        if (objectUrl) URL.revokeObjectURL(objectUrl);
-        objectUrl = "";
-      }
-
-      const dataUrl = await withTimeout(
-        readFileAsDataUrl(file),
-        IMAGE_LOAD_TIMEOUT_MS,
-        "Photo read timed out."
-      );
-      const fallbackImg = await withTimeout(
-        loadImageElement(dataUrl),
-        IMAGE_LOAD_TIMEOUT_MS,
-        "Photo decode timed out."
-      );
-      return { imageSource: fallbackImg, objectUrl: "", previewSrc: dataUrl };
-    }
-
-    function cropFrom(source, x, y, w, h) {
-      const sx = Math.max(0, Math.floor(x));
-      const sy = Math.max(0, Math.floor(y));
-      const sw = Math.max(1, Math.floor(w));
-      const sh = Math.max(1, Math.floor(h));
-      if (sx >= source.width || sy >= source.height) return null;
-      const safeW = Math.min(sw, source.width - sx);
-      const safeH = Math.min(sh, source.height - sy);
-      if (safeW < 2 || safeH < 2) return null;
-      const temp = document.createElement("canvas");
-      temp.width = safeW;
-      temp.height = safeH;
-      const tctx = temp.getContext("2d");
-      tctx.drawImage(source, sx, sy, safeW, safeH, 0, 0, safeW, safeH);
-      return temp;
-    }
-
-    function rotateCanvas(source, degrees) {
-      const rotated = document.createElement("canvas");
-      const rctx = rotated.getContext("2d");
-      if (degrees % 180 === 0) {
-        rotated.width = source.width;
-        rotated.height = source.height;
-      } else {
-        rotated.width = source.height;
-        rotated.height = source.width;
-      }
-      rctx.translate(rotated.width / 2, rotated.height / 2);
-      rctx.rotate((degrees * Math.PI) / 180);
-      rctx.drawImage(source, -source.width / 2, -source.height / 2);
-      return rotated;
-    }
-
-    function preprocessForQR(source) {
-      const out = document.createElement("canvas");
-      out.width = source.width;
-      out.height = source.height;
-      const octx = out.getContext("2d");
-      octx.drawImage(source, 0, 0);
-      const image = octx.getImageData(0, 0, out.width, out.height);
-      const data = image.data;
-      let sum = 0, count = 0;
-      for (let i = 0; i < data.length; i += 4) {
-        const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-        sum += lum; count++;
-      }
-      const avg = sum / Math.max(1, count);
-      for (let i = 0; i < data.length; i += 4) {
-        const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-        const bw = lum > avg ? 255 : 0;
-        data[i] = bw; data[i + 1] = bw; data[i + 2] = bw;
-      }
-      octx.putImageData(image, 0, 0);
-      return out;
-    }
-
-    function scaleCanvas(source, scale) {
-      const out = document.createElement("canvas");
-      out.width = Math.max(1, Math.round(source.width * scale));
-      out.height = Math.max(1, Math.round(source.height * scale));
-      const octx = out.getContext("2d");
-      octx.imageSmoothingEnabled = true;
-      octx.drawImage(source, 0, 0, out.width, out.height);
-      return out;
-    }
-
-    function tryDecodeQR(region) {
-      const qctx = region.getContext("2d");
-      const imageData = qctx.getImageData(0, 0, region.width, region.height);
-      return jsQR(imageData.data, region.width, region.height, { inversionAttempts: "attemptBoth" });
-    }
-
-    function readQRCodeFromCanvas(baseCanvas) {
-      const tryCandidates = [
-        () => tryDecodeQR(baseCanvas), // 1. Original
-        () => tryDecodeQR(scaleCanvas(baseCanvas, 1.5)), // 2. Slight upscale
-        () => tryDecodeQR(preprocessForQR(baseCanvas)),   // 3. Pre-processed B&W
-        () => { // 4. Center Crop
-          const crop = cropFrom(baseCanvas, baseCanvas.width * 0.25, baseCanvas.height * 0.25, baseCanvas.width * 0.5, baseCanvas.height * 0.5);
-          return crop ? tryDecodeQR(crop) : null;
-        },
-        () => { // 5. Rotations
-          for (const deg of [90, 180, 270]) {
-            const res = tryDecodeQR(rotateCanvas(baseCanvas, deg));
-            if (res) return res;
-          }
-          return null;
-        }
-      ];
-
-      for (const fn of tryCandidates) {
-        const res = fn();
-        if (res) return res.data;
-      }
-      return "";
-    }
-
-    function escapeHtml(value) {
-      return String(value == null ? "" : value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
-    }
-
-    function normalizeDate(value) {
-      const s = String(value || "").trim();
-      if (!s) return "-";
-      const m = s.match(/([0-3]?\d)[\/.-]([0-1]?\d)[\/.-](\d{2,4})/);
-      if (m) {
-        const dd = m[1].padStart(2, "0");
-        const mm = m[2].padStart(2, "0");
-        const yy = (m[3].length === 2 ? "20" + m[3] : m[3]);
-        return dd + "-" + mm + "-" + yy;
-      }
-      return s;
+    /* ── UTILS ── */
+    function escapeHtml(v) {
+      return String(v == null ? "" : v)
+        .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
     }
 
     function normalizeTime(value) {
@@ -1115,115 +582,197 @@
       const m = s.match(/([0-2]?\d)\s*:\s*([0-5]\d)\s*(AM|PM)?/);
       if (m) {
         let hh = Number(m[1]);
-        const mm = m[2];
-        const mer = m[3];
-        if (mer) {
-          hh = hh % 12;
-          if (mer === "PM") hh += 12;
-        }
+        const mm = m[2], mer = m[3];
+        if (mer) { hh = hh % 12; if (mer === "PM") hh += 12; }
         const h12 = ((hh + 11) % 12) + 1;
-        const merOut = hh >= 12 ? "PM" : "AM";
-        return String(h12).padStart(2, "0") + ":" + mm + " " + merOut;
+        return String(h12).padStart(2,"0") + ":" + mm + " " + (hh >= 12 ? "PM" : "AM");
       }
       return s;
     }
 
-    function toBoolean(value) {
-      const s = String(value == null ? "" : value).trim().toLowerCase();
+    function toBoolean(v) {
+      const s = String(v == null ? "" : v).trim().toLowerCase();
       return s === "true" || s === "1" || s === "yes" || s === "completed";
     }
 
     function normalizeRows(rows) {
       return (rows || []).map((r, idx) => ({
-        rowNumber: Number(r.rowNumber || idx + 2),
-        mfd: normalizeDate(r.mfd),
-        time: normalizeTime(r.time),
+        rowNumber:   Number(r.rowNumber || idx + 2),
         cuttingTime: normalizeTime(r.cuttingTime),
-        batch: String(r.batch || "").trim(),
-        serial: String(r.serial || "").trim(),
+        batch:       String(r.batch  || "").trim(),
+        serial:      String(r.serial || "").trim(),
         isCompleted: toBoolean(r.isCompleted)
       }));
     }
 
-    function groupByBatch(rows) {
+    function groupBy(rows, key) {
       const map = new Map();
-      rows.forEach((row) => {
-        const key = row.batch || "NO_BATCH";
-        if (!map.has(key)) map.set(key, []);
-        map.get(key).push(row);
+      rows.forEach(r => {
+        const k = r[key] || "NO_" + key.toUpperCase();
+        if (!map.has(k)) map.set(k, []);
+        map.get(k).push(r);
       });
       return map;
     }
 
-    function groupBySerial(rows) {
-      const map = new Map();
-      rows.forEach((row) => {
-        const key = row.serial || "NO_SERIAL";
-        if (!map.has(key)) map.set(key, []);
-        map.get(key).push(row);
-      });
-      return map;
+    function compareText(a, b) {
+      return String(a||"").localeCompare(String(b||""), undefined, { numeric:true, sensitivity:"base" });
     }
 
-    function compareTextAsc(a, b) {
-      return String(a || "").localeCompare(String(b || ""), undefined, { numeric: true, sensitivity: "base" });
+    function isSerialDone(sRows) { return sRows.length > 0 && sRows.every(r => r.isCompleted); }
+    function statusOrder(s) { return { late:0, warn:1, idle:2, done:3 }[s] ?? 2; }
+
+    /* ── RENDER BATCHES (preserves expand state on silent refresh) ── */
+    function renderBatches() {
+      // Remember expanded state
+      const expanded = new Set();
+      batchList.querySelectorAll(".batch-item.expanded").forEach(el => expanded.add(el.dataset.bk));
+
+      batchList.innerHTML = "";
+      const batchMap = groupBy(allRows, "batch");
+      if (!batchMap.size) { batchList.innerHTML = '<div class="empty">No data.</div>'; return; }
+
+      Array.from(batchMap.entries())
+        .sort((a, b) => compareText(a[0], b[0]))
+        .forEach(([batch, rows]) => {
+          const serialMap  = groupBy(rows, "serial");
+          const doneCount  = Array.from(serialMap.values()).filter(isSerialDone).length;
+          const wasOpen    = expanded.has(batch);
+
+          const item = document.createElement("div");
+          item.className = "batch-item" + (wasOpen ? " expanded" : "");
+          item.dataset.bk = batch;
+
+          item.innerHTML = `
+            <button class="batch-header">
+              <div class="batch-info">
+                <p class="batch-name">${escapeHtml(batch === "NO_BATCH" ? "(No Batch)" : batch)}</p>
+                <div class="batch-meta">Serials: ${serialMap.size} | Completed: ${doneCount}</div>
+                <div class="collapsed-serials"></div>
+              </div>
+              <span class="drop-icon"><i class="bi bi-chevron-${wasOpen ? "up" : "down"}"></i></span>
+            </button>
+            <div class="batch-content"><div class="mini-card-grid"></div></div>
+          `;
+
+          const header  = item.querySelector(".batch-header");
+          const chipBox = item.querySelector(".collapsed-serials");
+          const grid    = item.querySelector(".mini-card-grid");
+
+          header.addEventListener("click", () => {
+            item.classList.toggle("expanded");
+            header.querySelector(".drop-icon").innerHTML =
+              item.classList.contains("expanded")
+                ? "<i class='bi bi-chevron-up'></i>"
+                : "<i class='bi bi-chevron-down'></i>";
+          });
+
+          Array.from(serialMap.keys())
+            .sort((a, b) => {
+              const aDone = isSerialDone(serialMap.get(a));
+              const bDone = isSerialDone(serialMap.get(b));
+              // Completed always go last; within each group sort by serial number
+              if (aDone !== bDone) return aDone ? 1 : -1;
+              return compareText(a, b);
+            })
+            .forEach(sKey => {
+              const sRows  = serialMap.get(sKey);
+              const latest = sRows[0];
+              const status = getCardStatus(latest);
+              const sLabel = sKey === "NO_SERIAL" ? "?" : sKey;
+
+              // Chip
+              const chip = document.createElement("span");
+              chip.className = "serial-chip" +
+                (status === "done" ? " done" : status === "late" ? " late" : status === "warn" ? " warn" : "");
+              chip.textContent = sLabel;
+              chipBox.appendChild(chip);
+
+              // Mini card — clicking goes directly to card detail, NO confirm modal
+              const mc = document.createElement("div");
+              mc.className = "mini-card status-" + status;
+              mc.innerHTML = `
+                <div class="mc-serial">Serial: ${escapeHtml(sLabel)}</div>
+                <div>
+                  <div class="mc-cut-label">Cutting Time</div>
+                  <p class="mc-cut-val">${escapeHtml(latest.cuttingTime || "-")}</p>
+                </div>
+                <div class="mc-status-badge">${statusLabel(status)}</div>
+              `;
+              mc.addEventListener("click", () => {
+                // Read-only view — Complete button is NOT shown (scan-only access)
+                renderSerialCard(latest, sRows, false);
+                batchView.classList.add("hidden");
+                serialView.classList.remove("hidden");
+                selectedBatchLabel.textContent = "Serial: " + sLabel;
+                setStatus("Viewing serial " + sLabel, false);
+              });
+              grid.appendChild(mc);
+            });
+
+          batchList.appendChild(item);
+        });
     }
 
-    function compareGroupKeyAsc(a, b, missingKey) {
-      if (a === missingKey && b !== missingKey) return 1;
-      if (a !== missingKey && b === missingKey) return -1;
-      return compareTextAsc(a, b);
+    /* ── RENDER SERIAL CARD ── */
+    // allowAction = true  → shows Complete/Incomplete button (scan flow only)
+    // allowAction = false → read-only view (mini-card click)
+    function renderSerialCard(latest, serialRows, allowAction = true) {
+      const isDone = isSerialDone(serialRows);
+      const status = getCardStatus(latest);
+      const bText  = latest.batch  || "(No Batch)";
+      const sText  = latest.serial || "(No Serial)";
+
+      cardContainer.innerHTML = `
+        <div class="card status-${status}">
+          <div class="card-top">
+            <span>${escapeHtml(bText)}</span>
+            <span class="status-label-pill">${statusLabel(status)}</span>
+          </div>
+          <div class="card-body">
+            <div class="cutting-section">
+              <div class="cutting-label">Cutting Time</div>
+              <p class="cutting-val">${escapeHtml(latest.cuttingTime || "-")}</p>
+            </div>
+            <div class="details-box">
+              <div class="detail-item">
+                <div class="detail-label">Batch</div>
+                <div class="detail-val">${escapeHtml(bText)}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Serial</div>
+                <div class="detail-val">${escapeHtml(sText)}</div>
+              </div>
+            </div>
+          </div>
+          ${allowAction ? `
+          <div class="card-footer">
+            <button class="big-complete-btn ${isDone ? "undo" : "mark"}" type="button">
+              ${isDone ? "Incomplete" : "Complete"}
+            </button>
+          </div>` : `
+          <div style="padding:8px 0;font-size:12px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:6px;">
+            <i class="bi bi-lock"></i> Scan the label to mark complete / incomplete
+          </div>`}
+        </div>
+      `;
+
+      if (allowAction) {
+        cardContainer.querySelector(".big-complete-btn").onclick = () =>
+          askCompletionChange({
+            rowNumbers:  serialRows.map(r => r.rowNumber),
+            isCompleted: !isDone,
+            batch:       bText,
+            serialLabel: sText
+          });
+      }
     }
 
-    function isSerialGroupCompleted(serialRows) {
-      return serialRows.length > 0 && serialRows.every((r) => r.isCompleted);
-    }
-
-    function isBatchGroupCompleted(rows) {
-      const serialMap = groupBySerial(rows);
-      if (!serialMap.size) return false;
-      return Array.from(serialMap.values()).every((serialRows) => isSerialGroupCompleted(serialRows));
-    }
-
-    async function fetchRows() {
-      const url = SCRIPT_URL + (SCRIPT_URL.includes("?") ? "&" : "?") + "action=rows";
-      const response = await fetch(url);
-      const data = await response.json();
-      if (!response.ok || data.ok === false) throw new Error(data.error || "Fetch failed");
-      return data;
-    }
-
-    async function postUpdate(payload) {
-      const response = await fetch(SCRIPT_URL, {
-        method: "POST",
-        body: new URLSearchParams(payload)
-      });
-      const data = await response.json();
-      if (!response.ok || data.ok === false) throw new Error(data.error || "Update failed");
-      return data;
-    }
-
-    function hideUndoToast() {
-      if (undoTimer) clearTimeout(undoTimer);
-      undoToast.classList.add("hidden");
-      lastUndoAction = null;
-    }
-
-    function showUndoToast(action) {
-      lastUndoAction = action;
-      undoText.textContent = "Marked completed for serial " + (action.serialLabel || "-") + ".";
-      undoToast.classList.remove("hidden");
-      undoTimer = setTimeout(hideUndoToast, 15000);
-    }
-
-    function updateLocalCompletion(rowNumbers, isCompleted) {
-      const set = new Set(rowNumbers.map(Number));
-      allRows = allRows.map((row) => set.has(Number(row.rowNumber)) ? { ...row, isCompleted } : row);
-    }
-
+    /* ── COMPLETE / UNDO ── */
     function askCompletionChange(action) {
       pendingAction = action;
-      confirmText.textContent = `Do you want to ${action.isCompleted ? "mark as completed" : "undo completion"} for serial ${action.serialLabel}?`;
+      confirmText.textContent =
+        `${action.isCompleted ? "Mark as completed" : "Undo completion"} for serial ${action.serialLabel}?`;
       confirmModal.classList.remove("hidden");
     }
 
@@ -1234,242 +783,287 @@
       confirmModal.classList.add("hidden");
       setStatus("Updating...", false);
       try {
-        await postUpdate({ action: "set_completed", rowNumbers: action.rowNumbers.join(","), isCompleted: action.isCompleted });
+        await postUpdate({ action:"set_completed", rowNumbers: action.rowNumbers.join(","), isCompleted: action.isCompleted });
         updateLocalCompletion(action.rowNumbers, action.isCompleted);
 
-        // Refresh view
         if (!serialView.classList.contains("hidden")) {
-          // In card view, refresh the card
-          const rows = allRows.filter(r => (r.batch || "NO_BATCH") === action.batch && (r.serial || "NO_SERIAL") === action.serialLabel);
-          if (rows.length) renderSerialCard(rows[0], rows);
+          const rows = allRows.filter(r => r.batch === action.batch && r.serial === action.serialLabel);
+          if (rows.length) renderSerialCard(rows[0], rows, true);
           else showBatchView();
         } else {
           renderBatches();
         }
 
         if (action.isCompleted) showUndoToast(action);
-        setStatus("Updated successfully.", false);
+        setStatus("Updated.", false);
       } catch (err) {
         setStatus("Update failed: " + err.message, true);
       }
     }
 
-    function renderBatches() {
-      batchList.innerHTML = "";
-      const batchMap = groupByBatch(allRows);
-      if (!batchMap.size) { batchList.innerHTML = '<div class="empty">No data.</div>'; return; }
-      const entries = Array.from(batchMap.entries()).sort((a, b) => {
-        const aC = isBatchGroupCompleted(a[1]);
-        const bC = isBatchGroupCompleted(b[1]);
-        if (aC !== bC) return aC ? 1 : -1;
-        return compareGroupKeyAsc(a[0], b[0], "NO_BATCH");
-      });
-      entries.forEach(([batch, rows]) => {
-        const serialMap = groupBySerial(rows);
-        const completedCount = Array.from(serialMap.values()).filter(isSerialGroupCompleted).length;
-        const item = document.createElement("div");
-        item.className = "batch-item";
-        item.innerHTML = `
-          <button class="batch-header">
-            <div class="batch-info">
-              <p class="batch-name">${escapeHtml(batch === "NO_BATCH" ? "(No Batch)" : batch)}</p>
-              <div class="batch-meta">Serials: ${serialMap.size} | Completed: ${completedCount}</div>
-              <div class="collapsed-serials"></div>
-            </div>
-            <span class="drop-icon"><i class="bi bi-chevron-down"></i></span>
-          </button>
-          <div class="batch-content"><div class="mini-card-grid"></div></div>
-        `;
-        const header = item.querySelector(".batch-header");
-        header.addEventListener("click", () => {
-          item.classList.toggle("expanded");
-          header.querySelector(".drop-icon").innerHTML = item.classList.contains("expanded") ? "<i class='bi bi-chevron-up'></i>" : "<i class='bi bi-chevron-down'></i>";
-        });
-        const chipBox = item.querySelector(".collapsed-serials");
-        const grid = item.querySelector(".mini-card-grid");
-
-        const sKeys = Array.from(serialMap.keys()).sort((a, b) => compareGroupKeyAsc(a, b, "NO_SERIAL"));
-        sKeys.forEach(sKey => {
-          const sRows = serialMap.get(sKey);
-          const isDone = isSerialGroupCompleted(sRows);
-          const latest = sRows[0];
-          const sLabel = sKey === "NO_SERIAL" ? "?" : sKey;
-          const bLabel = (batch === "NO_BATCH") ? "(No Batch)" : batch;
-
-          // Collapsed chip
-          const chip = document.createElement("span");
-          chip.className = "serial-chip" + (isDone ? " done" : "");
-          chip.textContent = sLabel;
-          chipBox.appendChild(chip);
-
-          // Expanded mini-card (miniature of .card)
-          const mc = document.createElement("div");
-          mc.className = "mini-card";
-          mc.innerHTML = `
-            <div class="mc-top">
-              <span>${escapeHtml(latest.mfd || "-")}</span>
-              <span>${escapeHtml(latest.time || "-")}</span>
-            </div>
-            <div>
-              <div class="mc-cut-label">Cutting Time</div>
-              <p class="mc-cut-val">${escapeHtml(latest.cuttingTime || "-")}</p>
-            </div>
-            <div class="mc-details">
-              <div><span class="mc-detail-label">Batch</span><div class="mc-detail-val">${escapeHtml(bLabel)}</div></div>
-              <div style="margin-top:3px"><span class="mc-detail-label">Serial</span><div class="mc-detail-val">${escapeHtml(sLabel)}</div></div>
-            </div>
-            <div class="mc-status ${isDone ? "completed" : "pending"}">${isDone ? "Completed" : "Pending"}</div>
-          `;
-          grid.appendChild(mc);
-        });
-        batchList.appendChild(item);
-      });
+    function updateLocalCompletion(rowNumbers, isCompleted) {
+      const set = new Set(rowNumbers.map(Number));
+      allRows = allRows.map(r => set.has(Number(r.rowNumber)) ? { ...r, isCompleted } : r);
     }
 
+    function showUndoToast(action) {
+      lastUndoAction = action;
+      undoText.textContent = "Completed: serial " + action.serialLabel;
+      undoToast.classList.remove("hidden");
+      undoTimer = setTimeout(hideUndoToast, 15000);
+    }
 
+    function hideUndoToast() {
+      if (undoTimer) clearTimeout(undoTimer);
+      undoToast.classList.add("hidden");
+      lastUndoAction = null;
+    }
+
+    /* ── VIEWS ── */
     function showBatchView() {
+      activeCardBatch  = null;
+      activeCardSerial = null;
       serialView.classList.add("hidden");
       batchView.classList.remove("hidden");
-      setStatus("Scan label.", false);
+      setStatus("Ready", false);
     }
 
-    function showDirectCard(batchKey, serialKey) {
-      const rows = allRows.filter(r => (r.batch || "NO_BATCH") === batchKey && (r.serial || "NO_SERIAL") === serialKey);
-      if (rows.length) renderSerialCard(rows[0], rows);
-      else setStatus("Serial not found.", true);
-    }
-
-    function renderSerialCard(latest, serialRows) {
-      const isDone = isSerialGroupCompleted(serialRows);
-      const bText = (latest.batch || "NO_BATCH") === "NO_BATCH" ? "(No Batch)" : latest.batch;
-      const sText = (latest.serial || "NO_SERIAL") === "NO_SERIAL" ? "(No Serial)" : latest.serial;
-
-      cardContainer.innerHTML = `
-        <div class="card">
-          <div class="card-top">
-            <span>MFD: ${escapeHtml(latest.mfd || "-")}</span>
-            <span>Time: ${escapeHtml(latest.time || "-")}</span>
-          </div>
-          <div class="card-body">
-            <div class="cutting-section">
-              <div class="cutting-label">Cutting Time</div>
-              <p class="cutting-val">${escapeHtml(latest.cuttingTime || "-")}</p>
-            </div>
-            <div class="details-box">
-              <div class="detail-item"><div class="detail-label">Batch</div><div class="detail-val">${escapeHtml(bText)}</div></div>
-              <div class="detail-item"><div class="detail-label">Serial</div><div class="detail-val">${escapeHtml(sText)}</div></div>
-            </div>
-          </div>
-          <div class="card-footer">
-            <button class="big-complete-btn ${isDone ? "undo" : ""}" type="button">${isDone ? "Undo Completed" : "Completed"}</button>
-          </div>
-        </div>
-      `;
-      cardContainer.querySelector(".big-complete-btn").onclick = () => askCompletionChange({
-        rowNumbers: serialRows.map(r => r.rowNumber),
-        isCompleted: !isDone,
-        batch: bText,
-        serialLabel: sText
+    /* ── CAMERA ── */
+    function setStep(n) {
+      [step1, step2, step3].forEach((el, i) => {
+        el.classList.remove("active","done");
+        if (i + 1 < n)  el.classList.add("done");
+        if (i + 1 === n) el.classList.add("active");
       });
-      batchView.classList.add("hidden");
-      serialView.classList.remove("hidden");
-      selectedBatchLabel.textContent = "Viewing Serial: " + sText;
     }
 
-    // Scan Confirmation Modal Elements
-    const scanConfirmModal = document.getElementById("scanConfirmModal");
-    const scanBatchInput = document.getElementById("scanBatchInput");
-    const scanSerialInput = document.getElementById("scanSerialInput");
-    const scanCancelBtn = document.getElementById("scanCancelBtn");
-    const scanSearchBtn = document.getElementById("scanSearchBtn");
-
-    // Scanner
-    cameraBtn.onclick = () => photoInput.click();
-    photoInput.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file || scanBusy) return;
-      scanBusy = true;
-      setStatus("Scanning...", false);
+    async function startCamera() {
+      camModal.classList.remove("hidden");
+      loadingOverlay.classList.add("hidden");
+      setStep(1);
       try {
-        const { imageSource, objectUrl } = await loadImageFromFile(file);
-
-        // Prepare canvas for OCR and multi-pass QR
-        drawImageToCanvas(imageSource, scanCanvas, scanCtx);
-        if (typeof imageSource.close === "function") imageSource.close();
-        if (objectUrl) URL.revokeObjectURL(objectUrl);
-
-        setStatus("Reading text...", false);
-        const ocr = await Tesseract.recognize(scanCanvas, "eng");
-        const sMatch = ocr.data.text.match(/(?:SERIAL|S\/N|SER)\s*[:\-\s]*(\d+)/i);
-        const serial = sMatch ? sMatch[1] : "";
-
-        setStatus("Scanning QR...", false);
-        const batch = readQRCodeFromCanvas(scanCanvas);
-
-        // Show validation modal
-        scanBatchInput.value = batch;
-        scanSerialInput.value = serial;
-        scanConfirmModal.classList.remove("hidden");
-        setStatus(batch ? "Found potential data. Please validate." : "QR not found. Please enter Batch manually.", !batch);
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false
+        });
+        cameraVideo.srcObject = mediaStream;
+        await cameraVideo.play();
+        startScanLoop();
+        setStatus("Scanning…", false);
       } catch (err) {
-        setStatus("Scan failed: " + err.message, true);
-      } finally {
-        scanBusy = false;
-        photoInput.value = "";
+        camModal.classList.add("hidden");
+        setStatus(
+          err.name === "NotAllowedError" ? "Camera permission denied."
+            : "Camera error: " + (err.message || err.name),
+          true
+        );
       }
-    };
-
-    function drawImageToCanvas(imageSource, targetCanvas, targetCtx) {
-      const srcW = imageSource.width;
-      const srcH = imageSource.height;
-      const scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(srcW, srcH));
-      const drawW = Math.max(1, Math.round(srcW * scale));
-      const drawH = Math.max(1, Math.round(srcH * scale));
-      targetCanvas.width = drawW;
-      targetCanvas.height = drawH;
-      targetCtx.clearRect(0, 0, drawW, drawH);
-      targetCtx.drawImage(imageSource, 0, 0, drawW, drawH);
     }
 
-    scanCancelBtn.onclick = () => scanConfirmModal.classList.add("hidden");
-    scanSearchBtn.onclick = () => {
-      const batch = scanBatchInput.value.trim();
-      const serial = scanSerialInput.value.trim();
-      if (!batch || !serial) {
-        alert("Please provide both Batch and Serial.");
-        return;
-      }
-      scanConfirmModal.classList.add("hidden");
-      const match = allRows.find(r => r.batch === batch && r.serial === serial);
-      if (match) {
-        renderSerialCard(match, allRows.filter(r => r.batch === batch && r.serial === serial));
-        setStatus("Found matching card.", false);
-      } else {
-        setStatus(`No record found for ${batch} / ${serial}`, true);
-      }
-    };
+    function stopCamera() {
+      scanActive = false;
+      if (scanLoopId) { cancelAnimationFrame(scanLoopId); scanLoopId = null; }
+      if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+      cameraVideo.srcObject = null;
+    }
 
-    async function loadData() {
-      setStatus("Loading...", false);
+    function startScanLoop() {
+      scanActive = true;
+      function tick() {
+        if (!scanActive) return;
+        if (cameraVideo.readyState < cameraVideo.HAVE_ENOUGH_DATA) { scanLoopId = requestAnimationFrame(tick); return; }
+        scanCanvas.width  = cameraVideo.videoWidth;
+        scanCanvas.height = cameraVideo.videoHeight;
+        scanCtx.drawImage(cameraVideo, 0, 0);
+        const id = scanCtx.getImageData(0, 0, scanCanvas.width, scanCanvas.height);
+        const qr = jsQR(id.data, scanCanvas.width, scanCanvas.height, { inversionAttempts: "attemptBoth" });
+        if (qr) { scanActive = false; onQRFound(qr.data); return; }
+        scanLoopId = requestAnimationFrame(tick);
+      }
+      scanLoopId = requestAnimationFrame(tick);
+    }
+
+    /* ── QR FOUND → OCR → direct card (no confirm modal) ── */
+    async function onQRFound(qrData) {
+      // Green flash ring
+      if (qrRingEl) qrRingEl.remove();
+      qrRingEl = document.createElement("div");
+      qrRingEl.className = "qr-found-ring";
+      cameraWrap.appendChild(qrRingEl);
+      setTimeout(() => { if (qrRingEl) { qrRingEl.remove(); qrRingEl = null; } }, 600);
+
+      stopCamera();
+      setStep(2);
+      loadingOverlay.classList.remove("hidden");
+      loadingLabel.textContent = "Reading label…";
+
+      let serial = "";
+      try {
+        const ocrText = await readOcrSpace(scanCanvas);
+        loadingLabel.textContent = "Fetching card…";
+        serial = parseSerial(ocrText);
+      } catch (_) { /* OCR failed — try with empty serial */ }
+
+      setStep(3);
+      await delay(300);
+      loadingOverlay.classList.add("hidden");
+      camModal.classList.add("hidden");
+
+      if (qrData && serial) {
+        // Both found — open card directly
+        openCardByKeys(qrData, serial);
+      } else if (qrData && !serial) {
+        // QR found but serial not detected — show manual entry modal
+        pendingManualBatch = qrData;
+        manualBatchDisplay.textContent = qrData;
+        manualSerialInput.value = "";
+        manualModal.classList.remove("hidden");
+        setTimeout(() => manualSerialInput.focus(), 100);
+      } else {
+        // QR itself not detected
+        notFoundText.textContent = "Could not detect a QR code from the label. Please try scanning again with better lighting.";
+        notFoundModal.classList.remove("hidden");
+      }
+    }
+
+    function openCardByKeys(batch, serial) {
+      const rows = allRows.filter(r => r.batch === batch && r.serial === serial);
+      if (rows.length) {
+        activeCardBatch  = batch;
+        activeCardSerial = serial;
+        renderSerialCard(rows[0], rows, true); // scan flow → action allowed
+        batchView.classList.add("hidden");
+        serialView.classList.remove("hidden");
+        selectedBatchLabel.textContent = "Serial: " + serial;
+        setStatus("Card found.", false);
+      } else {
+        notFoundText.textContent = `No record found for batch "${batch}" and serial "${serial}". Please check and try again.`;
+        notFoundModal.classList.remove("hidden");
+      }
+    }
+
+    function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    /* ── OCR.SPACE ── */
+    async function readOcrSpace(sourceCanvas) {
+      const base64 = sourceCanvas.toDataURL("image/jpeg", 0.85);
+      const fd = new FormData();
+      fd.append("apikey",      OCR_API_KEY);
+      fd.append("base64Image", base64);
+      fd.append("language",    "eng");
+      fd.append("isTable",     "true");
+      fd.append("OCREngine",   "2");
+      const res  = await fetch("https://api.ocr.space/parse/image", { method:"POST", body:fd });
+      const data = await res.json();
+      if (data.OCRExitCode === 1 && data.ParsedResults?.length)
+        return data.ParsedResults[0].ParsedText || "";
+      return "";
+    }
+
+    function parseSerial(text) {
+      if (!text) return "";
+      const lines = text.split(/[\n\r]+/).map(l => l.trim()).filter(Boolean);
+      const idx = lines.findIndex(l => /(?:S\.?no|Serial)/i.test(l));
+      if (idx !== -1) {
+        const m = lines[idx].match(/(?:S\.?no|Serial):?\s*(\d+)/i);
+        if (m) return m[1];
+        if (idx + 1 < lines.length) {
+          const nm = lines[idx + 1].match(/^(\d+)$/);
+          if (nm) return nm[1];
+        }
+      }
+      const broad = text.match(/(?:S\.?no|Serial):?\s*(\d+)/i);
+      return broad ? broad[1] : "";
+    }
+
+    /* ── DATA ── */
+    async function fetchRows() {
+      const url  = SCRIPT_URL + (SCRIPT_URL.includes("?") ? "&" : "?") + "action=rows";
+      const res  = await fetch(url);
+      const data = await res.json();
+      if (!res.ok || data.ok === false) throw new Error(data.error || "Fetch failed");
+      return data;
+    }
+
+    async function postUpdate(payload) {
+      const res  = await fetch(SCRIPT_URL, { method:"POST", body: new URLSearchParams(payload) });
+      const data = await res.json();
+      if (!res.ok || data.ok === false) throw new Error(data.error || "Update failed");
+      return data;
+    }
+
+    async function loadData(silent = false) {
+      if (!silent) setStatus("Loading...", false);
       try {
         const data = await fetchRows();
         allRows = normalizeRows(data.rows);
-        renderBatches();
-        showBatchView();
-      } catch (err) { setStatus("Load failed.", true); }
+
+        // Re-render whatever is currently visible
+        if (!batchView.classList.contains("hidden")) {
+          renderBatches();
+        }
+        if (!serialView.classList.contains("hidden") && activeCardBatch && activeCardSerial) {
+          const rows = allRows.filter(r =>
+            (r.batch  || "NO_BATCH")  === activeCardBatch &&
+            (r.serial || "NO_SERIAL") === activeCardSerial
+          );
+          if (rows.length) renderSerialCard(rows[0], rows, true);
+        }
+
+        if (!silent) {
+          showBatchView();
+          setStatus("Ready", false);
+        }
+      } catch (err) {
+        if (!silent) setStatus("Load failed.", true);
+      }
     }
 
-    reloadBtn.onclick = loadData;
-    backBtn.onclick = showBatchView;
+    /* ── AUTO REFRESH every 10 s — smooth, silent, non-disruptive ── */
+    function scheduleAutoRefresh() {
+      if (autoRefreshId) clearInterval(autoRefreshId);
+      autoRefreshId = setInterval(async () => {
+        // Skip refresh while camera or confirm modal is open
+        if (!camModal.classList.contains("hidden"))     return;
+        if (!confirmModal.classList.contains("hidden")) return;
+
+        // Soft pulse on the status pill — tells user the page is alive
+        statusEl.classList.remove("pulsing");
+        void statusEl.offsetWidth; // reflow to restart animation
+        statusEl.classList.add("pulsing");
+        statusEl.addEventListener("animationend", () => statusEl.classList.remove("pulsing"), { once: true });
+
+        await loadData(true);
+      }, 10000);
+    }
+
+    /* ── EVENTS ── */
+    cameraBtn.onclick      = () => startCamera();
+    camCancelBtn.onclick   = () => { stopCamera(); camModal.classList.add("hidden"); setStatus("Ready", false); };
+    reloadBtn.onclick      = () => loadData(false);
+    backBtn.onclick        = showBatchView;
     confirmCancelBtn.onclick = () => confirmModal.classList.add("hidden");
-    confirmOkBtn.onclick = applyPendingAction;
-    undoBtn.onclick = () => {
-      if (lastUndoAction) askCompletionChange({ ...lastUndoAction, isCompleted: false });
-      hideUndoToast();
-    };
+    confirmOkBtn.onclick     = applyPendingAction;
+    undoBtn.onclick  = () => { if (lastUndoAction) askCompletionChange({ ...lastUndoAction, isCompleted: false }); hideUndoToast(); };
     undoCloseBtn.onclick = hideUndoToast;
-    loadData();
+
+    // Manual serial entry modal
+    manualCancelBtn.onclick = () => { manualModal.classList.add("hidden"); setStatus("Scan cancelled.", false); };
+    manualSearchBtn.onclick = () => {
+      const s = manualSerialInput.value.trim();
+      if (!s) { manualSerialInput.focus(); return; }
+      manualModal.classList.add("hidden");
+      openCardByKeys(pendingManualBatch, s);
+    };
+    manualSerialInput.addEventListener("keydown", e => { if (e.key === "Enter") manualSearchBtn.click(); });
+
+    // Not-found modal
+    notFoundCloseBtn.onclick = () => notFoundModal.classList.add("hidden");
+    window.addEventListener("beforeunload", () => stopCamera());
+
+    /* ── INIT ── */
+    loadData(false);
+    scheduleAutoRefresh();
   </script>
 </body>
-
 </html>
