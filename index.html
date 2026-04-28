@@ -1638,7 +1638,7 @@
       fd.append("language", "eng");
       fd.append("isTable", "true");
       fd.append("OCREngine", "2");
-      const res = await fetch("https://api.ocr.space/parse/image", { method: "POST", body: fd });
+      const res = await fetch("https://srikrishnasweets.duckdns.org:8443/api/ocr", { method: "POST", body: fd });
       const data = await res.json();
       if (data.OCRExitCode === 1 && data.ParsedResults?.length)
         return data.ParsedResults[0].ParsedText || "";
